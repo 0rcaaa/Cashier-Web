@@ -1,12 +1,30 @@
 <?php 
 session_start();
 require '../../../service/utility.php';
+require '../../../service/connection.php';
 
 if(isset($_SESSION['loggedIn']) == False){
     header('location: ../auth/index.php');
     exit();
 }
+$sql = "SELECT 
+p.id AS product_id,
+p.image AS img,
+dp.name AS product_name,
+c.name AS category_name,
+p.price AS product_price,
+COALESCE(SUM(td.quantity), 0) AS total_sold,
+(COALESCE(SUM(td.quantity), 0) * p.price) AS profit
+FROM products p
+JOIN categories c ON p.category_id = c.id
+JOIN details_product dp ON p.details_id = dp.id
+LEFT JOIN transaction_details td ON p.id = td.product_id
+GROUP BY  p.id, dp.name, c.name, p.price
+ORDER BY profit DESC";
 ?>
+
+
+<!-- 30 + 30 + 20 + 40 + 10 + 40 + 30 + 30 + 10 + 10 + 10 + 20-->
 
 <!DOCTYPE html>
 <html lang="en">
@@ -107,110 +125,40 @@ if(isset($_SESSION['loggedIn']) == False){
     </div>
   </div>
 
+  <?php 
+  $result = $conn->query($sql);
+  while($row = $result->fetch_assoc()){
+   ?>
+
+
   <div
     class="grid grid-cols-6 border-t border-stroke px-4 py-4.5 dark:border-strokedark sm:grid-cols-8 md:px-6 2xl:px-7.5"
   >
     <div class="col-span-3 flex items-center">
       <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
         <div class="h-12.5 w-15 rounded-md">
-          <img src="../../images/product/product-01.png" alt="Product" />
+          <img src="../../images/product/<?=$row['img']?>" alt="Product" />
         </div>
         <p class="text-sm font-medium text-black dark:text-white">
-          Apple Watch Series 7
+        <?=$row['product_name']?>
         </p>
       </div>
     </div>
     <div class="col-span-2 hidden items-center sm:flex">
-      <p class="text-sm font-medium text-black dark:text-white">Electronics</p>
+      <p class="text-sm font-medium text-black dark:text-white"><?=$row['category_name']?></p>
     </div>
     <div class="col-span-1 flex items-center">
-      <p class="text-sm font-medium text-black dark:text-white">$269</p>
+      <p class="text-sm font-medium text-black dark:text-white"><?="Rp " . number_format($row['product_price'], 0, ',', '.')?></p>
     </div>
     <div class="col-span-1 flex items-center">
-      <p class="text-sm font-medium text-black dark:text-white">22</p>
+      <p class="text-sm font-medium text-black dark:text-white"><?=$row['total_sold']?></p>
     </div>
     <div class="col-span-1 flex items-center">
-      <p class="text-sm font-medium text-meta-3">$45</p>
+      <p class="text-sm font-medium text-meta-3"><?="Rp " . number_format($row['profit'], 0, ',', '.')?></p>
     </div>
   </div>
-  <div
-    class="grid grid-cols-6 border-t border-stroke px-4 py-4.5 dark:border-strokedark sm:grid-cols-8 md:px-6 2xl:px-7.5"
-  >
-    <div class="col-span-3 flex items-center">
-      <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <div class="h-12.5 w-15 rounded-md">
-          <img src="../../images/product/product-02.png" alt="Product" />
-        </div>
-        <p class="text-sm font-medium text-black dark:text-white">
-          Macbook Pro M1
-        </p>
-      </div>
-    </div>
-    <div class="col-span-2 hidden items-center sm:flex">
-      <p class="text-sm font-medium text-black dark:text-white">Electronics</p>
-    </div>
-    <div class="col-span-1 flex items-center">
-      <p class="text-sm font-medium text-black dark:text-white">$546</p>
-    </div>
-    <div class="col-span-1 flex items-center">
-      <p class="text-sm font-medium text-black dark:text-white">34</p>
-    </div>
-    <div class="col-span-1 flex items-center">
-      <p class="text-sm font-medium text-meta-3">$125</p>
-    </div>
-  </div>
-  <div
-    class="grid grid-cols-6 border-t border-stroke px-4 py-4.5 dark:border-strokedark sm:grid-cols-8 md:px-6 2xl:px-7.5"
-  >
-    <div class="col-span-3 flex items-center">
-      <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <div class="h-12.5 w-15 rounded-md">
-          <img src="../../images/product/product-03.png" alt="Product" />
-        </div>
-        <p class="text-sm font-medium text-black dark:text-white">
-          Dell Inspiron 15
-        </p>
-      </div>
-    </div>
-    <div class="col-span-2 hidden items-center sm:flex">
-      <p class="text-sm font-medium text-black dark:text-white">Electronics</p>
-    </div>
-    <div class="col-span-1 flex items-center">
-      <p class="text-sm font-medium text-black dark:text-white">$443</p>
-    </div>
-    <div class="col-span-1 flex items-center">
-      <p class="text-sm font-medium text-black dark:text-white">64</p>
-    </div>
-    <div class="col-span-1 flex items-center">
-      <p class="text-sm font-medium text-meta-3">$247</p>
-    </div>
-  </div>
-  <div
-    class="grid grid-cols-6 border-t border-stroke px-4 py-4.5 dark:border-strokedark sm:grid-cols-8 md:px-6 2xl:px-7.5"
-  >
-    <div class="col-span-3 flex items-center">
-      <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <div class="h-12.5 w-15 rounded-md">
-          <img src="../../images/product/product-04.png" alt="Product" />
-        </div>
-        <p class="text-sm font-medium text-black dark:text-white">
-          HP Probook 450
-        </p>
-      </div>
-    </div>
-    <div class="col-span-2 hidden items-center sm:flex">
-      <p class="text-sm font-medium text-black dark:text-white">Electronics</p>
-    </div>
-    <div class="col-span-1 flex items-center">
-      <p class="text-sm font-medium text-black dark:text-white">$499</p>
-    </div>
-    <div class="col-span-1 flex items-center">
-      <p class="text-sm font-medium text-black dark:text-white">72</p>
-    </div>
-    <div class="col-span-1 flex items-center">
-      <p class="text-sm font-medium text-meta-3">$103</p>
-    </div>
-  </div>
+  <?php } ?>
+  
 </div>
 
               <!-- ====== Table Two End -->

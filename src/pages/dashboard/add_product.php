@@ -6,6 +6,71 @@ if(isset($_SESSION['loggedIn']) == False){
     header('location: ../auth/index.php');
     exit();
 }
+
+if(isset($_POST['submit'])){
+    $productName = $_POST['productName'];
+    $stock = $_POST['stock'];
+    $startingPrice = $_POST['startingPrice'];
+    $sellingPrice = $_POST['sellingPrice'];
+    $details = $_POST['details'];
+    $image = upload();
+    $product = new Product();
+    $product->addProduct($productName, $stock, $startingPrice, $sellingPrice, $details, $image);
+}
+class Product {
+  public function addProduct($productName, $stock, $startingPrice, $sellingPrice, $details, $image) {
+    // Database connection
+    $conn = new mysqli('localhost', 'root', '', 'kasir_a');
+
+    // Check connection
+    if ($conn->connect_error) {
+      die("Connection failed: " . $conn->connect_error);
+    }
+
+    // Prepare and bind
+    $stmt = $conn->prepare("INSERT INTO products (product_name, stock, starting_price, selling_price, details, image) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("siddss", $productName, $stock, $startingPrice, $sellingPrice, $details, $image);
+
+    // Execute the statement
+    if ($stmt->execute()) {
+      echo "New product added successfully";
+    } else {
+      echo "Error: " . $stmt->error;
+    }
+
+    // Close connections
+    $stmt->close();
+    $conn->close();
+  }
+}
+
+function upload()
+{
+    if (!isset($_FILES['logo_event'])) {
+        return false;
+    }
+
+    $namaFile = $_FILES['logo_event']['name'];
+    $ukuranFile = $_FILES['logo_event']['size'];
+    $error = $_FILES['logo_event']['error'];
+    $tmpName = $_FILES['logo_event']['tmp_name'];
+
+    if ($error === 4) {
+        return false;
+    }
+
+    if ($ukuranFile > 1000000) {
+        return false;
+    }
+
+    $fileExt = pathinfo($namaFile, PATHINFO_EXTENSION);
+    $newFileName = uniqid() . '.' . $fileExt;
+
+    $uploadDir = realpath(__DIR__ . '/../img/image-event') . '/';
+    $uploadPath = $uploadDir . $newFileName;
+
+    return move_uploaded_file($tmpName, $uploadPath) ? $newFileName : false;
+}
 ?>
 
 <!DOCTYPE html>

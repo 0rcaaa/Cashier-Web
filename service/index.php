@@ -1,3 +1,3 @@
 <?php 
-header("location: ../index.php");
+header("location: ../src/pages/auth/index.php");
 exit();
