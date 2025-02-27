@@ -6,71 +6,6 @@ if(isset($_SESSION['loggedIn']) == False){
     header('location: ../auth/index.php');
     exit();
 }
-
-if(isset($_POST['submit'])){
-    $productName = $_POST['productName'];
-    $stock = $_POST['stock'];
-    $startingPrice = $_POST['startingPrice'];
-    $sellingPrice = $_POST['sellingPrice'];
-    $details = $_POST['details'];
-    $image = upload();
-    $product = new Product();
-    $product->addProduct($productName, $stock, $startingPrice, $sellingPrice, $details, $image);
-}
-class Product {
-  public function addProduct($productName, $stock, $startingPrice, $sellingPrice, $details, $image) {
-    // Database connection
-    $conn = new mysqli('localhost', 'root', '', 'kasir_a');
-
-    // Check connection
-    if ($conn->connect_error) {
-      die("Connection failed: " . $conn->connect_error);
-    }
-
-    // Prepare and bind
-    $stmt = $conn->prepare("INSERT INTO products (product_name, stock, starting_price, selling_price, details, image) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("siddss", $productName, $stock, $startingPrice, $sellingPrice, $details, $image);
-
-    // Execute the statement
-    if ($stmt->execute()) {
-      echo "New product added successfully";
-    } else {
-      echo "Error: " . $stmt->error;
-    }
-
-    // Close connections
-    $stmt->close();
-    $conn->close();
-  }
-}
-
-function upload()
-{
-    if (!isset($_FILES['logo_event'])) {
-        return false;
-    }
-
-    $namaFile = $_FILES['logo_event']['name'];
-    $ukuranFile = $_FILES['logo_event']['size'];
-    $error = $_FILES['logo_event']['error'];
-    $tmpName = $_FILES['logo_event']['tmp_name'];
-
-    if ($error === 4) {
-        return false;
-    }
-
-    if ($ukuranFile > 1000000) {
-        return false;
-    }
-
-    $fileExt = pathinfo($namaFile, PATHINFO_EXTENSION);
-    $newFileName = uniqid() . '.' . $fileExt;
-
-    $uploadDir = realpath(__DIR__ . '/../img/image-event') . '/';
-    $uploadPath = $uploadDir . $newFileName;
-
-    return move_uploaded_file($tmpName, $uploadPath) ? $newFileName : false;
-}
 ?>
 
 <!DOCTYPE html>
@@ -80,7 +15,7 @@ function upload()
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Settings | TailAdmin - Tailwind CSS Admin Dashboard Template</title>
-  <link href="../../css/style.css" rel="stylesheet">
+  <!-- <link href="../../css/style.css" rel="stylesheet"> -->
   <link href="../../css/output.css" rel="stylesheet"></head>
 
   <body
@@ -91,30 +26,21 @@ function upload()
     :class="{'dark text-bodydark bg-boxdark-2': darkMode === true}"
   >
     <!-- ===== Preloader Start ===== -->
-    <div
-  x-show="loaded"
-  x-init="window.addEventListener('DOMContentLoaded', () => {setTimeout(() => loaded = false, 500)})"
-  class="fixed left-0 top-0 z-999999 flex h-screen w-screen items-center justify-center bg-white dark:bg-black"
->
-  <div
-    class="h-16 w-16 animate-spin rounded-full border-4 border-solid border-primary border-t-transparent"
-  ></div>
-</div>
-
+     <?php include '../../components/preloader.html';?>
     <!-- ===== Preloader End ===== -->
 
     <!-- ===== Page Wrapper Start ===== -->
     <div class="flex h-screen overflow-hidden">
       <!-- ===== Sidebar Start ===== -->
-       <?php include '../../components/sidebar.php';?>
-      <!-- ===== Sidebar End ===== -->
+       <?php include '../../components/sidebar.html';?>
+   <!-- ===== Sidebar End ===== -->
 
       <!-- ===== Content Area Start ===== -->
       <div
         class="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden"
       >
         <!-- ===== Header Start ===== -->
-        <?php include '../../components/header.php';?>
+        <?php include '../../components/header.html';?>
         <!-- ===== Header End ===== -->
 
         <!-- ===== Main Content Start ===== -->
