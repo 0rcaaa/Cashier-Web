@@ -1119,6 +1119,9 @@
       margin-inline-end: calc(calc(var(--spacing) * 3.5) * calc(1 - var(--tw-space-x-reverse)));
     }
   }
+  .self-center {
+    align-self: center;
+  }
   .overflow-hidden {
     overflow: hidden;
   }
@@ -1210,20 +1213,11 @@
   .bg-\[\#6577F3\] {
     background-color: #6577F3;
   }
-  .bg-\[\#09122C\] {
-    background-color: #09122C;
-  }
-  .bg-\[\#10339b\] {
-    background-color: #10339b;
-  }
   .bg-black {
     background-color: var(--color-black);
   }
   .bg-black-1 {
     background-color: #1C2434;
-  }
-  .bg-boxdark {
-    background-color: #24303F;
   }
   .bg-boxdark-2 {
     background-color: #1A222C;
@@ -1267,6 +1261,9 @@
   .bg-transparent {
     background-color: transparent;
   }
+  .bg-warm {
+    background-color: #F2EFE7;
+  }
   .bg-warning {
     background-color: #FFA70B;
   }
@@ -1284,12 +1281,6 @@
   }
   .fill-current {
     fill: currentColor;
-  }
-  .fill-meta-3 {
-    fill: #10B981;
-  }
-  .fill-meta-5 {
-    fill: #259AE6;
   }
   .fill-primary {
     fill: #3C50E0;
@@ -1419,6 +1410,9 @@
   }
   .pl-3 {
     padding-left: calc(var(--spacing) * 3);
+  }
+  .pl-4 {
+    padding-left: calc(var(--spacing) * 4);
   }
   .pl-6 {
     padding-left: calc(var(--spacing) * 6);
@@ -1806,6 +1800,13 @@
     &:hover {
       @media (hover: hover) {
         fill: #3C50E0;
+      }
+    }
+  }
+  .hover\:text-meta-5 {
+    &:hover {
+      @media (hover: hover) {
+        color: #259AE6;
       }
     }
   }
@@ -2225,19 +2226,9 @@
       border-color: #2E3A47;
     }
   }
-  .dark\:bg-\[\#09122C\] {
-    &:is(.dark *) {
-      background-color: #09122C;
-    }
-  }
   .dark\:bg-\[\#37404F\] {
     &:is(.dark *) {
       background-color: #37404F;
-    }
-  }
-  .dark\:bg-black {
-    &:is(.dark *) {
-      background-color: var(--color-black);
     }
   }
   .dark\:bg-boxdark {
@@ -2408,6 +2399,16 @@
       &:focus {
         --tw-ring-color: var(--color-blue-500);
       }
+    }
+  }
+  .\[\&\:\:-webkit-inner-spin-button\]\:appearance-none {
+    &::-webkit-inner-spin-button {
+      appearance: none;
+    }
+  }
+  .\[\&\:\:-webkit-outer-spin-button\]\:appearance-none {
+    &::-webkit-outer-spin-button {
+      appearance: none;
     }
   }
 }

@@ -9,31 +9,6 @@ if (isset($_SESSION['loggedIn']) == False) {
 
 include '../../../service/connection.php';
 
-$sql = "SELECT 
-    (SELECT COUNT(*) FROM members) AS total_users, 
-    (SELECT COUNT(*) FROM transactions) AS total_transactions, 
-    (SELECT COUNT(*) FROM products) AS total_products,
-    DATE_FORMAT(t.created_at, '%Y-%m') AS bulan,
-    SUM(td.subtotal) AS total_penjualan,
-    SUM(td.subtotal * p.margin / 100) AS total_keuntungan
-    FROM kasir.transactions t
-    JOIN kasir.transaction_details td ON t.id = td.transaction_id
-    JOIN kasir.products p ON td.product_id = p.id
-    WHERE DATE_FORMAT(t.created_at, '%Y-%m') = DATE_FORMAT(NOW(), '%Y-%m') 
-    GROUP BY bulan
-    ORDER BY bulan;
-  ";
-
-$result = $conn->query($sql);
-$row = $result->fetch_assoc();
-
-$total_users = $row['total_users'];
-$total_transactions = $row['total_transactions'];
-$total_products = $row['total_products'];
-$total_profit = $row['total_keuntungan'];
-
-// Format ke dalam Rupiah (IDR)
-$formatted_profit = "Rp " . number_format($total_profit, 0, ',', '.');
 ?>
 
 <!DOCTYPE html>
@@ -100,26 +75,18 @@ $formatted_profit = "Rp " . number_format($total_profit, 0, ',', '.');
               <div class="mt-4 flex items-end justify-between">
                 <div>
                   <h4
+                    id="totalTransaksi"
                     class="text-title-md font-bold text-black dark:text-white">
-                    <?= $total_transactions ?>
+                    0
                   </h4>
-                  <span class="text-sm font-medium">Total Transactions</span>
+                  <span class="text-sm font-medium">Total Transaksi Hari ini</span>
                 </div>
 
                 <span
+                  id="persenTransaksi"
                   class="flex items-center gap-1 text-sm font-medium text-meta-3">
-                  0.43%
-                  <svg
-                    class="fill-meta-3"
-                    width="10"
-                    height="11"
-                    viewBox="0 0 10 11"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg">
-                    <path
-                      d="M4.35716 2.47737L0.908974 5.82987L5.0443e-07 4.94612L5 0.0848689L10 4.94612L9.09103 5.82987L5.64284 2.47737L5.64284 10.0849L4.35716 10.0849L4.35716 2.47737Z"
-                      fill="" />
-                  </svg>
+                  0%
+                  <img id="transaksiArrow" src="" alt="panah">
                 </span>
               </div>
             </div>
@@ -149,28 +116,30 @@ $formatted_profit = "Rp " . number_format($total_profit, 0, ',', '.');
                 </svg>
               </div>
 
-              <div class="mt-4 flex items-end justify-between">
+              <div id="warna-P" class="mt-4 flex items-end justify-between">
                 <div>
                   <h4
+                    id="totalProfit"
                     class="text-title-md font-bold text-black dark:text-white">
-                    <?= $formatted_profit; ?>
+                    Rp. 0
                   </h4>
-                  <span class="text-sm font-medium">Total Profit</span>
+                  <span class="text-sm font-medium">Total Keuntungan hari ini</span>
                 </div>
 
                 <span
+                  id="persenKeuntungan"
                   class="flex items-center gap-1 text-sm font-medium text-meta-3">
-                  4.35%
+                  0%
                   <svg
-                    class="fill-meta-3"
                     width="10"
                     height="11"
                     viewBox="0 0 10 11"
-                    fill="none"
+                    fill="#fff"
                     xmlns="http://www.w3.org/2000/svg">
                     <path
-                      d="M4.35716 2.47737L0.908974 5.82987L5.0443e-07 4.94612L5 0.0848689L10 4.94612L9.09103 5.82987L5.64284 2.47737L5.64284 10.0849L4.35716 10.0849L4.35716 2.47737Z"
-                      fill="" />
+                      id="keuntunganArrow"
+                      d=""
+                      fill="#fff" />
                   </svg>
                 </span>
               </div>
@@ -201,27 +170,12 @@ $formatted_profit = "Rp " . number_format($total_profit, 0, ',', '.');
               <div class="mt-4 flex items-end justify-between">
                 <div>
                   <h4
+                    id="totalProduk"
                     class="text-title-md font-bold text-black dark:text-white">
-                    <?= $total_products; ?>
+                    0
                   </h4>
                   <span class="text-sm font-medium">Total Product</span>
                 </div>
-
-                <span
-                  class="flex items-center gap-1 text-sm font-medium text-meta-3">
-                  2.59%
-                  <svg
-                    class="fill-meta-3"
-                    width="10"
-                    height="11"
-                    viewBox="0 0 10 11"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg">
-                    <path
-                      d="M4.35716 2.47737L0.908974 5.82987L5.0443e-07 4.94612L5 0.0848689L10 4.94612L9.09103 5.82987L5.64284 2.47737L5.64284 10.0849L4.35716 10.0849L4.35716 2.47737Z"
-                      fill="" />
-                  </svg>
-                </span>
               </div>
             </div>
             <!-- Card Item End -->
@@ -253,27 +207,12 @@ $formatted_profit = "Rp " . number_format($total_profit, 0, ',', '.');
               <div class="mt-4 flex items-end justify-between">
                 <div>
                   <h4
+                    id="totalUser"
                     class="text-title-md font-bold text-black dark:text-white">
-                    <?= $total_users; ?>
+                    0
                   </h4>
                   <span class="text-sm font-medium">Total Users</span>
                 </div>
-
-                <span
-                  class="flex items-center gap-1 text-sm font-medium text-meta-5">
-                  0.95%
-                  <svg
-                    class="fill-meta-5"
-                    width="10"
-                    height="11"
-                    viewBox="0 0 10 11"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg">
-                    <path
-                      d="M5.64284 7.69237L9.09102 4.33987L10 5.22362L5 10.0849L-8.98488e-07 5.22362L0.908973 4.33987L4.35716 7.69237L4.35716 0.0848701L5.64284 0.0848704L5.64284 7.69237Z"
-                      fill="" />
-                  </svg>
-                </span>
               </div>
             </div>
             <!-- Card Item End -->
@@ -502,8 +441,43 @@ $formatted_profit = "Rp " . number_format($total_profit, 0, ',', '.');
         .catch(error => console.error('Error fetching data:', error));
   </script> -->
 
-  <script src="https://cdn.jsdelivr.net/npm/apexcharts">
+<!-- todo: fix ternary operator for arrow condition where js cant find the id of tags arrow -->
+<script>
+  document.addEventListener("DOMContentLoaded", function(){
+    fetch('<?=base_url()?>/service/api.php?action=dashboard')
+    .then(response => response.json())
+    .then(data =>{
+      if(data.error){
+        console.log(data.error);
+        return;
+      }
 
+      // document.getElementById('transaksiArrow').setAttribute('d', data.transaction_arrow);
+      document.getElementById('totalTransaksi').innerText = data.total_transactions;
+      document.getElementById('persenTransaksi').innerText = data.percentage_transaction + '%';
+      document.getElementById('persenTransaksi').classList.add(data.percentage_class);
+      // document.getElementById('transaksiArrow')?.setAttribute("src", data.transaction_arrow === "up"
+      //   ? "<?=base_url()?>/src/assets/img/icons/arrow-up.svg"
+      //   : "<?=base_url()?>/src/assets/img/icons/arrow-down.svg"
+      // );
+
+      document.getElementById('totalProfit').innerText = data.total_profit;
+      document.getElementById('persenKeuntungan').innerText = data.percentage_profit + '%';
+      document.getElementById('persenKeuntungan').classList.add(data.profit_class);
+      console.log(data.profit_arrow);
+    //   document.getElementById('keuntunganArrow')?.setAttribute('d', data.profit_arrow == "up" 
+    //   ? "M0 0L5 5L10 0" 
+    //   : "M5.M4.35716 2.47737L0.908974 5.82987L5.0443e-07 4.94612L5 0.0848689L10 4.94612L9.09103 5.82987L5.64284 2.47737L5.64284 10.0849L4.35716 10.0849L4.35716 2.47737Z64284 7.69237L9.09102 4.33987L10 5.22362L5 10.0849L-8.98488e-07 5.22362L0.908973 4.33987L4.35716 7.69237L4.35716 0.0848701L5.64284 0.0848704L5.64284 7.69237Z"
+    // );
+
+      document.getElementById('totalUser').innerText = data.total_users;
+      document.getElementById('totalProduk').innerText = data.total_products;
+    })
+    .catch(error => console.error('Error fetching data:', error));
+  });
+</script>
+
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts">
     import ApexCharts from "apexcharts";
 
 

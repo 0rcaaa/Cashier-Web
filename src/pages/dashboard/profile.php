@@ -58,7 +58,7 @@ if(isset($_SESSION['loggedIn']) == False){
                 <nav>
                   <ol class="flex items-center gap-2">
                     <li>
-                      <a class="font-medium" href="index.html">Dashboard /</a>
+                      <a class="font-medium hover:text-meta-5" href="index.php">Dashboard /</a>
                     </li>
                     <li class="text-primary">Profile</li>
                   </ol>

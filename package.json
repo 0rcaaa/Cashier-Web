@@ -11,6 +11,6 @@
     "tailwindcss": "^4.0.7"
   },
   "scripts": {
-    "dev": "@tailwindcss/cli -i ./src/css/tailwindcss.css -o ./src/css/output.css -w"
+    "dev": "tailwindcss -i ./src/css/tailwindcss.css -o ./src/css/output.css --watch"
   }
 }

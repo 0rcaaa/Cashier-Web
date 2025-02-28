@@ -9,7 +9,7 @@ if (isset($_SESSION['loggedIn']) == False) {
 }
 $sql = "SELECT 
 p.id AS product_id,
-dp.image AS img,
+p.image AS img,
 p.name AS product_name,
 c.name AS category_name,
 p.price AS product_price,
@@ -17,7 +17,6 @@ COALESCE(SUM(td.quantity), 0) AS total_sold,
 (COALESCE(SUM(td.quantity), 0) * p.price) AS profit
 FROM products p
 JOIN categories c ON p.category_id = c.id
-JOIN details_product dp ON p.details_id = dp.id
 LEFT JOIN transaction_details td ON p.id = td.product_id
 GROUP BY  p.id, p.name, c.name, p.price
 ORDER BY profit DESC";
@@ -42,7 +41,7 @@ ORDER BY profit DESC";
           $watch('darkMode', value => localStorage.setItem('darkMode', JSON.stringify(value)))"
   :class="{'dark text-bodydark bg-boxdark-2': darkMode === true}">
   <!-- ===== Preloader Start ===== -->
-   <?php include '../../components/preloader.html'; ?>
+   <!-- <?php include '../../components/preloader.html'; ?> -->
   <!-- ===== Preloader End ===== -->
 
   <!-- ===== Page Wrapper Start ===== -->
@@ -72,7 +71,7 @@ ORDER BY profit DESC";
             <nav>
               <ol class="flex items-center gap-2">
                 <li>
-                  <a class="font-medium" href="index.html">Dashboard /</a>
+                  <a class="font-medium hover:text-meta-5" href="index.php">Dashboard /</a>
                 </li>
                 <li class="font-medium text-primary">Tables</li>
               </ol>

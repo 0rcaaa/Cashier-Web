@@ -47,12 +47,20 @@ if(isset($_SESSION['loggedIn']) == False){
         <!-- ===== Main Content Start ===== -->
         <main>
           <div class="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
-            <div>
-              <div class="">
-                <h1 class="text-white text-5xl font-bold">Kasir - Pemesanan</h1>
-                <div></div>
-              </div>
-              <div class=""></div>
+            <div
+              class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <h2 class="text-title-md2 font-bold text-black dark:text-white">
+                Transaction
+              </h2>
+
+              <nav>
+                <ol class="flex items-center gap-2">
+                  <li>
+                    <a class="font-medium hover:text-meta-5" href="index.php">Dashboard /</a>
+                  </li>
+                  <li class="font-medium text-primary">Transaction</li>
+                </ol>
+              </nav>
             </div>
 
           </div>
