@@ -15,9 +15,9 @@ if(isset($_SESSION['loggedIn']) == False){
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>
-      eCommerce Dashboard | TailAdmin - Tailwind CSS Admin Dashboard Template
+      Transaction
     </title>
-    <!-- <link href="<?=base_url()?>/src/css/style.css" rel="stylesheet"> -->
+    <link href="../../assets/images/logo/logo_white.png" rel="icon">
     <link href="<?=base_url()?>/src/css/output.css" rel="stylesheet">
 </head>
 

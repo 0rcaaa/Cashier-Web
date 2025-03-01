@@ -21,7 +21,7 @@ if (isset($_SESSION['loggedIn']) == False) {
 </head>
 
 <body
-  x-data="{ page: 'add_product', 'loaded': true, 'darkMode': true, 'stickyMenu': false, 'sidebarToggle': false, 'scrollTop': false }"
+  x-data="{ page: 'add_account', 'loaded': true, 'darkMode': true, 'stickyMenu': false, 'sidebarToggle': false, 'scrollTop': false }"
   x-init="
           darkMode = JSON.parse(localStorage.getItem('darkMode'));
           $watch('darkMode', value => localStorage.setItem('darkMode', JSON.stringify(value)))"
@@ -45,14 +45,6 @@ if (isset($_SESSION['loggedIn']) == False) {
 
       <!-- ===== Main Content Start ===== -->
       <main>
-        <?php if (isset($_SESSION['error'])) {
-          echo $_SESSION['error'];
-          unset($_SESSION['error']);
-        } elseif (isset($_SESSION['success'])) {
-          echo $_SESSION['success'];
-          unset($_SESSION['success']);
-        }
-        ?>
         <div class="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
           <div class="mx-auto max-w-270">
             <!-- Breadcrumb Start -->
@@ -74,7 +66,7 @@ if (isset($_SESSION['loggedIn']) == False) {
             <!-- Breadcrumb End -->
 
             <!-- ====== Settings Section Start -->
-            <form action="<?= base_url() ?>/service/auth.php" method="POST" enctype="multipart/form-data" class="grid grid-cols-5 gap-8">
+            <form action="<?= base_url() ?>/service/auth.php" method="POST" class="grid grid-cols-5 gap-8">
               <div class="col-span-5 xl:col-span-3">
                 <div
                   class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
@@ -206,10 +198,11 @@ if (isset($_SESSION['loggedIn']) == False) {
                   <div class="p-7">
                     <div
                       id="FileUpload"
+                      accept="image/*"
                       class="relative mb-5.5 block w-full cursor-pointer appearance-none rounded border border-dashed border-primary bg-gray px-4 py-4 dark:bg-meta-4 sm:py-7.5">
                       <input
                         type="file"
-                        name="image"
+                        name="imageInput"
                         accept="image/*"
                         class="absolute inset-0 z-50 m-0 h-full w-full cursor-pointer p-0 opacity-0 outline-none" />
                       <div class="flex flex-col items-center justify-center space-y-3">
@@ -262,7 +255,7 @@ if (isset($_SESSION['loggedIn']) == False) {
                     </div>
                   </div>
                 </div>
-                <div class="flex justify-end gap-4.5 ">
+                <div class="flex justify-end gap-4.5">
                   <button
                     class="flex justify-center rounded border border-stroke px-6 py-2 font-medium text-black hover:shadow-1 dark:border-strokedark dark:text-white"
                     type="reset">
@@ -275,8 +268,8 @@ if (isset($_SESSION['loggedIn']) == False) {
                   </button>
                 </div>
               </div>
-            </form>
-            <!-- ====== Settings Section End -->
+              <form />
+              <!-- ====== Settings Section End -->
           </div>
         </div>
       </main>

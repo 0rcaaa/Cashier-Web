@@ -14,9 +14,10 @@ if(isset($_SESSION['loggedIn']) == False){
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Profile | TailAdmin - Tailwind CSS Admin Dashboard Template</title>
-  <!-- <link href="../../css/style.css" rel="stylesheet"> -->
-  <link href="../../css/output.css" rel="stylesheet"></head>
+    <title>Profile</title>
+    <link href="../../assets/images/logo/logo_white.png" rel="icon">
+    <link href="../../css/output.css" rel="stylesheet">
+  </head>
 
   <body
     x-data="{ page: 'profile', 'loaded': true, 'darkMode': true, 'stickyMenu': false, 'sidebarToggle': false, 'scrollTop': false }"

@@ -15,11 +15,11 @@ if(isset($_SESSION['loggedIn']) == False){
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>
-      eCommerce Dashboard | TailAdmin - Tailwind CSS Admin Dashboard Template
+      History
     </title>
     <link href="../../css/output.css" rel="stylesheet">
-    <!-- <link href="../../css/style.css" rel="stylesheet"> -->
-</head>
+    <link href="../../assets/images/logo/logo_white.png" rel="icon">
+    </head>
 
   <body
     x-data="{ page: 'history', 'loaded': true, 'darkMode': true, 'stickyMenu': false, 'sidebarToggle': false, 'scrollTop': false }"

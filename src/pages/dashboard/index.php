@@ -19,10 +19,11 @@ include '../../../service/connection.php';
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>
-    eCommerce Dashboard | TailAdmin - Tailwind CSS Admin Dashboard Template
+    Main Dashboard
   </title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link href="<?= base_url() ?>/src/css/output.css" rel="stylesheet">
+  <link href="../../assets/images/logo/logo_white.png" rel="icon">
 </head>
 
 <body

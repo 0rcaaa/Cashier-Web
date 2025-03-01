@@ -29,19 +29,20 @@ ORDER BY profit DESC";
   <meta charset="UTF-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tables | TailAdmin - Tailwind CSS Admin Dashboard Template</title>
-  <!-- <link href="../../css/style.css" rel="stylesheet"> -->
+  <title>Product Tables</title>
+  <link href="../../assets/images/logo/logo_white.png" rel="icon">
   <link href="../../css/output.css" rel="stylesheet">
 </head>
 
 <body
-  x-data="{ page: 'tables', 'loaded': true, 'darkMode': true, 'stickyMenu': false, 'sidebarToggle': false, 'scrollTop': false }"
+  x-data="{ page: 'category_view', 'loaded': true, 'darkMode': true, 'stickyMenu': false, 'sidebarToggle': false, 'scrollTop': false }"
   x-init="
           darkMode = JSON.parse(localStorage.getItem('darkMode'));
           $watch('darkMode', value => localStorage.setItem('darkMode', JSON.stringify(value)))"
   :class="{'dark text-bodydark bg-boxdark-2': darkMode === true}">
+
   <!-- ===== Preloader Start ===== -->
-   <!-- <?php include '../../components/preloader.html'; ?> -->
+   <?php include '../../components/preloader.html'; ?>
   <!-- ===== Preloader End ===== -->
 
   <!-- ===== Page Wrapper Start ===== -->
