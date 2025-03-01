@@ -1,4 +1,5 @@
 <?php 
+include 'connection.php';
 
 function base_url()
 {
@@ -17,4 +18,25 @@ function base_url()
 
   // Return the base URL
  return rtrim($baseUrl, '/'); // Remove trailing slash if necessary
+}
+
+function rememberMe($conn)
+{
+  if (isset($_COOKIE['auth_token'])) {
+    $token = $_COOKIE['auth_token'];
+    $stmt = $conn->prepare("SELECT * FROM admin WHERE token = ?");
+    $stmt->bind_param("s", $token);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        $_SESSION['name'] = $row['username'];
+        $_SESSION['email'] = $row['email'];
+        $_SESSION['loggedIn'] = true;
+        $_SESSION['role'] = $row['role'];
+        header('location: '.base_url() .'/src/pages/dashboard/index.php');
+        exit();
+    }
+  }
 }
