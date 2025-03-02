@@ -14,7 +14,7 @@ function base_url()
   $baseDir = explode('/', $baseDir);
 
   // Combine to form the base URL
-  $baseUrl = $protocol . $host . "/" . $baseDir[1];
+  $baseUrl = $protocol . $host . "/" . $baseDir[0]; //turn to 1 if you using xampp, 0 if you using laragon
 
   // Return the base URL
  return rtrim($baseUrl, '/'); // Remove trailing slash if necessary
