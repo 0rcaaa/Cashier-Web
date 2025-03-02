@@ -1,6 +1,7 @@
 <?php
 session_start();
 include("utility.php");
+include("connection.php");
 
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
     header('index.php');
@@ -10,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $action = $_POST['action'];
     switch ($action) {
         case 'login':
-            login();
+            login($conn);
             break;
         case 'addProduct':
             add_product($conn);
@@ -22,10 +23,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 
-function login()
+function login($conn)
 {
-    include("connection.php");
     session_start();
+include("connection.php");
+
 
     if (isset($_COOKIE['auth_token'])) {
         $token = $_COOKIE['auth_token'];
@@ -79,10 +81,10 @@ function login()
                 header('location: ../src/pages/dashboard/index.php');
                 exit();
             } else {
-                $_SESSION['error'] = "password salah";
+                $_SESSION['err'] = "password salah";
             }
         } else {
-            $_SESSION['error'] = "email tidak ditemukan";
+            $_SESSION['err'] = "email tidak ditemukan";
         }
         header('location: ../src/pages/auth/index.php');
         exit();
@@ -91,18 +93,22 @@ function login()
 
 function add_product($conn)
 {
+session_start();
 
     // Debugging: Echo all submitted data
-    echo '<pre>';
-    print_r($_POST);
-    print_r($_FILES);
-    echo '</pre>';
+    //turn on to debug
+    // echo '<pre>';
+    // print_r($_POST);
+    // print_r($_FILES);
+    // echo '</pre>';
 
     $targetDIR = __DIR__ . '/../src/assets/images/product/';
     if (!file_exists($targetDIR)) {
         mkdir($targetDIR, 0777, true);
+        // print_r("Directory created");
     }
-    echo $targetDIR;
+
+
     // Check if the file is an image
     $allowed = ['png', 'jpg', 'jpeg']; // Allowed file extensions
     $maxsize = 4194304; // 4 MB in bytes
@@ -113,13 +119,13 @@ function add_product($conn)
     $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION)); // Get the file extension
 
     if (!in_array($file_ext, $allowed)) {
-        $_SESSION['error'] = "File type is not allowed. Please upload a png, jpg, or jpeg file instead.";
+        $_SESSION['err'] = "File type is not allowed. Please upload a png, jpg, or jpeg file instead.";
         header('location: ../src/pages/dashboard/add_product.php');
         exit();
     }
 
     if ($file_size > $maxsize) {
-        $_SESSION['error'] = "File is too large. File size should not exceed 4MB.";
+        $_SESSION['err'] = "File is too large. File size should not exceed 4MB.";
         header('location: ../src/pages/dashboard/add_product.php');
         exit();
     }
@@ -137,25 +143,36 @@ function add_product($conn)
     $price = $_POST['price'];
     $margin = $_POST['margin'];
     $stock = $_POST['stock'];
+    if($_POST['production'] == ''){
+        $production = NULL;
+    }elseif($_POST['production'] !== ''){
+        $production = $_POST['production'];
+    }
+    if($_POST['exp'] == ''){
+        $exp = NULL;
+    }elseif($_POST['exp'] !== ''){
+        $exp = $_POST['exp'];
+    }
+    $brand = $_POST['brand'];
     $fid_category = $_POST['kategori'];
     $description = $_POST['Detail'];
+    $img = 'src/assets/images/product/' . $new_name;
 
+    // Check if all required fields are set
+        $stmt = $conn->prepare("INSERT INTO products
+            (name, price, margin, stock, category_id, description, image, brand_id, production_date, expiration_date, created_at) 
+            VALUES (?,?,?,?,?,?,?,?,?,?,NOW())");
+        $stmt->bind_param("sddiississ", $name, $price, $margin, $stock, $fid_category, $description, $img, $brand, $production, $exp);
+    // $query = "INSERT INTO products (name, price, margin, stock, category_id, description, image, brand_id, production_date, expiration_date, created_at) VALUES ($name, $price, $margin, $stock, $fid_category, $description, $img, $brand, $production, $exp, NOW())";
+    // echo $query;
 
-    $stmt = $conn->prepare("INSERT INTO products
-        (name, price, margin, stock, category_id, description, image, created_at) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
-    $stmt->bind_param("sddiiss", $name, $price, $margin, $stock, $fid_category, $description, $uploadDIR);
-    $stmt->execute();
+    if($stmt->execute()){
+        $_SESSION['success']= 'produk berhasil ditambahkan' ;
+        header('location: ../src/pages/dashboard/add_product.php');
+    }else{
+        $_SESSION['err']= 'produk gagal ditambahkan' ;
+        header('location: ../src/pages/dashboard/add_product.php');
 
-    if ($stmt->execute()) {
-        $_SESSION['success'] = "Product added successfully";
-    } else {
-        $_SESSION['error'] = 'error' . $stmt->error;
     }
-
-    $stmt->close();
-    $conn->close();
-    header('location: ../src/pages/dashboard/add_product.php');
-
-
 }
+   

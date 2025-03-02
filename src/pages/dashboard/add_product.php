@@ -95,6 +95,7 @@ if (isset($_SESSION['loggedIn']) == False) {
                           class="w-full rounded border border-stroke bg-gray px-4.5 py-3 font-medium text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
                           type="text"
                           name="productName"
+                          placeholder="Nama Produk"
                           id="productName" />
                       </div>
 
@@ -106,6 +107,7 @@ if (isset($_SESSION['loggedIn']) == False) {
                           class="w-full rounded border border-stroke bg-gray px-4.5 py-3 font-medium text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
                           type="text"
                           name="stock"
+                          placeholder="Jumlah stock"
                           id="stock" />
                       </div>
                     </div>
@@ -116,7 +118,7 @@ if (isset($_SESSION['loggedIn']) == False) {
                           class="mb-3 block text-sm font-medium text-black dark:text-white"
                           for="price">Starting Price</label>
                         <input
-                          class="w-full rounded border border-stroke bg-gray px-4.5 py-3 font-medium text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
+                          class=" w-full rounded border border-stroke bg-gray px-4.5 py-3 font-medium text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
                           type="text"
                           placeholder="Sebelum margin"
                           name="price"
@@ -132,9 +134,44 @@ if (isset($_SESSION['loggedIn']) == False) {
                               [&::-moz-appearance:textfield] w-full rounded border border-stroke bg-gray px-4.5 py-3 font-medium text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
                           type="number"
                           name="margin"
-                          placeholder="Max 3 Digit"
+                          placeholder="Max 100"
                           id="margin" />
                       </div>
+                    </div>
+
+                    <div class="mb-5.5 flex flex-col gap-5.5 sm:flex-row">
+                      <div class="w-full sm:w-1/2">
+                        <label
+                          class="mb-3 block text-sm font-medium text-black dark:text-white"
+                          for="production">Production Date</label>
+                        <input
+                          class="w-full rounded border border-stroke bg-gray px-4.5 py-3 font-medium text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
+                          type="date"
+                          name="production"/>
+                      </div>
+
+                      <div class="w-full sm:w-1/2">
+                        <label
+                          class="mb-3 block text-sm font-medium text-black dark:text-white"
+                          for="exp">Expiration Date</label>
+                        <input
+                          class="w-full rounded border border-stroke bg-gray px-4.5 py-3 font-medium text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
+                          type="date"
+                          name="exp"
+                          />
+                      </div>
+                    </div>
+
+                    <div class="mb-5.5">
+                      <label
+                        class="mb-3 block text-sm font-medium text-black dark:text-white"
+                        for="kategori">Brand</label>
+                      <select
+                        class=" w-full rounded border border-stroke bg-gray px-4.5 py-3 font-medium text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
+                        name="brand"
+                        id="brand">
+                        <option value="" class="dark:text-white">--- Pilih Brand ---</option>
+                      </select>
                     </div>
 
                     <div class="mb-5.5">
@@ -290,6 +327,7 @@ if (isset($_SESSION['loggedIn']) == False) {
       populateCategoryDropdown();
       setupImageUpload();
       setupMarginInput();
+      populateBrandDropdown();
     });
 
     function populateCategoryDropdown() {
@@ -306,6 +344,23 @@ if (isset($_SESSION['loggedIn']) == False) {
           });
         });
     }
+
+
+    function populateBrandDropdown() {
+      const brand = document.getElementById("brand");
+
+      fetch("<?= base_url() ?>/service/api.php?action=getBrands")
+        .then(response => response.json())
+        .then(data => {
+          data.forEach(item => {
+            const option = document.createElement("option");
+            option.value = item.id;
+            option.textContent = item.name;
+            brand.appendChild(option);
+          });
+        });
+    }
+
 
     document.getElementById("price").addEventListener("input", function(event) {
       let inputValue = event.target.value.replace(/[^\d,]/g, ""); // Hanya angka dan koma

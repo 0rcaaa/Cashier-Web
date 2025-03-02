@@ -62,7 +62,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <p style="color: red;"><?php echo $_SESSION['error']; unset($_SESSION['error']); ?></p>
     <?php endif; ?>
 
-    <form action="register.php" method="POST">
+    <form  method="POST">
         <label for="username">Username:</label>
         <input type="text" name="username" required><br>
 

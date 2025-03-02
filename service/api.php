@@ -23,6 +23,9 @@ switch ($action) {
         case 'getCategory':
         getCategory($conn);
         break;
+        case 'getBrands':
+        getBrands($conn);
+        break;
     default:
         echo json_encode(['error' => 'Invalid request']);
         http_response_code(400);
@@ -137,5 +140,21 @@ function getCategory($conn)
     }
 
     echo json_encode($categories);
+    exit();
+}
+
+function getBrands($conn)
+{
+    $stmt = $conn->prepare("SELECT * FROM brands");
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $stmt->close();
+
+    $brands = [];
+    while ($row = $result->fetch_assoc()) {
+        $brands[] = $row;
+    }
+
+    echo json_encode($brands);
     exit();
 }
