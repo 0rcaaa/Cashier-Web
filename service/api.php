@@ -17,15 +17,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 $action = isset($_GET['action']) ? $_GET['action'] : header('location: index.php');
 
 switch ($action) {
+
     case 'dashboard':
         dashboardData($conn);
         break;
-        case 'getCategory':
+    case 'getCategory':
         getCategory($conn);
         break;
-        case 'getBrands':
+    case 'getBrands':
         getBrands($conn);
         break;
+    case 'getProduct':
+        getProducts($conn);
+        break;
+
     default:
         echo json_encode(['error' => 'Invalid request']);
         http_response_code(400);
@@ -127,34 +132,55 @@ $arrow_icon = $percentage_change >= 0 ? 'up' : 'down';
     exit();
 }
 
+function getProducts($conn){
+    $stmt = $conn->prepare( "SELECT 
+p.id AS product_id,
+p.image AS img,
+p.name AS product_name,
+c.name AS category_name,
+p.price AS product_price,
+b.name AS brand,
+COALESCE(SUM(td.quantity), 0) AS total_sold,
+(COALESCE(SUM(td.quantity), 0) * p.price) AS profit
+FROM products p
+JOIN categories c ON p.category_id = c.id
+JOIN brands b ON p.brand_id = b.id
+LEFT JOIN transaction_details td ON p.id = td.product_id
+GROUP BY  p.id, p.name, c.name, p.price, b.name
+ORDER BY profit DESC 
+LIMIT 5");
+$stmt->execute();
+$result = $stmt->get_result();
+$products = $result->fetch_all(MYSQLI_ASSOC);
+
+echo json_encode($products);
+exit();
+}
+
 function getCategory($conn)
 {
-    $stmt = $conn->prepare("SELECT * FROM categories");
+    $stmt = $conn->prepare("SELECT c.id AS id, c.name AS name, COUNT(p.id) AS relate_c
+                            FROM categories c
+                            LEFT JOIN products p ON c.id = p.id
+                            GROUP BY c.id, c.name");
     $stmt->execute();
     $result = $stmt->get_result();
-    $stmt->close();
-
-    $categories = [];
-    while ($row = $result->fetch_assoc()) {
-        $categories[] = $row;
-    }
-
+    $categories = $result->fetch_all(MYSQLI_ASSOC);
+    
     echo json_encode($categories);
     exit();
 }
 
 function getBrands($conn)
 {
-    $stmt = $conn->prepare("SELECT * FROM brands");
+    $stmt = $conn->prepare("SELECT b.id AS id, b.name AS name, COUNT(p.id) AS relate_b
+                            FROM brands b
+                            LEFT JOIN products p ON b.id = p.id
+                            GROUP BY b.id, b.name");
     $stmt->execute();
     $result = $stmt->get_result();
-    $stmt->close();
-
-    $brands = [];
-    while ($row = $result->fetch_assoc()) {
-        $brands[] = $row;
-    }
-
+    $brands = $result->fetch_all(MYSQLI_ASSOC);
+    
     echo json_encode($brands);
     exit();
 }
