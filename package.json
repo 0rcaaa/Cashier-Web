@@ -12,5 +12,8 @@
   },
   "scripts": {
     "dev": "tailwindcss -i ./src/css/tailwindcss.css -o ./src/css/output.css --watch"
+  },
+  "devDependencies": {
+    "html5-qrcode": "^2.3.8"
   }
 }

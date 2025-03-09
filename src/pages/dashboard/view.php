@@ -195,44 +195,23 @@ if (isset($_SESSION['loggedIn']) == False) {
   <script>
     document.addEventListener("DOMContentLoaded", function() {
       const tb = document.getElementById('tb_product');
-      const kateTb = document.getElementById('container-categories');
-      const brandTb = document.getElementById('container-brand');
+      let kateTb = document.getElementById('container-categories');
+      let brandTb = document.getElementById('container-brand');
       Promise.all([
           fetch('<?= base_url() ?>/service/api.php?action=getProduct').then(response => response.json()),
           fetch('<?= base_url() ?>/service/api.php?action=getCategory').then(response => response.json()),
           fetch('<?= base_url() ?>/service/api.php?action=getBrands').then(response => response.json())
         ]).then(([products, kategori, brand]) => {
 
-          // tb.innerHTML = '';
-          // kateTb.innerHTML = '';
-          // brandTb.innerHTML = '';
-
-          console.log('Data 1:', products);
-      console.log('Data 2:', kategori);
-    console.log('Data 3:', brand);
-
+          
+          
+          //products data
           if (products.length === 0) {
             tb.innerHTML = `<td colspan="8" class="p-6 text-center text-gray-500 dark:text-gray-400">
                               Tidak ada produk tersedia. <a href="add_product.php" class="text-blue-500 hover:underline">Tambah produk?</a>
                             <td />`;
             return;
           }
-
-          if (kategori.length === 0) {
-            kateTb.innerHTML = `<div class="p-6 text-center text-gray-500 dark:text-gray-400">
-                                 No category exist. <a href="add_category.php" class="text-blue-500 hover:underline">Add category?</a>
-                                </div>`;
-            return
-          }
-
-          if (brand.length === 0) {
-            brandTb.innerHTML = `<div class="p-6 text-center text-gray-500 dark:text-gray-400">
-                                 No brand exist. <a href="add_brand.php" class="text-blue-500 hover:underline">Add brand?</a>
-                                </div>`;
-            return;
-          }
-
-          //products data
           products.forEach(row => {
             tb.innerHTML += `
                     <tr>
@@ -296,8 +275,13 @@ if (isset($_SESSION['loggedIn']) == False) {
           });
 
           //categories data
-          kategori.forEach(row => {
-            kateTb.innerHTML += `<div class="grid grid-cols-6 border-t border-stroke justify-items-center px-4 py-4.5 dark:border-strokedark md:px-6 2xl:px-7.5">
+          if (kategori.length === 0) {
+            kateTb.innerHTML = `<div class="p-6 text-center text-gray-500 dark:text-gray-400">
+                                 No category exist. <a href="add_category.php" class="text-blue-500 hover:underline">Add category?</a>
+                                </div>`;
+          } kategori.forEach(row => {
+            kateTb.innerHTML += `
+            <div class="grid grid-cols-6 border-t border-stroke justify-items-center px-4 py-4.5 dark:border-strokedark md:px-6 2xl:px-7.5">
                     <div class="col-span-1 flex items-center">
                       <p class="text-sm font-medium text-black dark:text-white">${row.id}</p>
                     </div>
@@ -334,8 +318,17 @@ if (isset($_SESSION['loggedIn']) == False) {
           });
 
 
+          //brand data
+          if (brand.length === 0) {
+            brandTb.innerHTML = `<div class="p-6 text-center text-gray-500 dark:text-gray-400">
+                                 No brand exist. <a href="add_brand.php" class="text-blue-500 hover:underline">Add brand?</a>
+                                </div>`;
+            return;
+          }
+
           brand.forEach(row => {
-            brandTb.innerHTML += `<div class="grid grid-cols-6 border-t border-stroke justify-items-center px-4 py-4.5 dark:border-strokedark md:px-6 2xl:px-7.5">
+            brandTb.innerHTML += `
+            <div class="grid grid-cols-6 border-t border-stroke justify-items-center px-4 py-4.5 dark:border-strokedark md:px-6 2xl:px-7.5">
                     <div class="col-span-1 flex items-center">
                       <p class="text-sm font-medium text-black dark:text-white">${row.id}</p>
                     </div>
