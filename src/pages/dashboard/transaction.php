@@ -63,8 +63,40 @@ if (isset($_SESSION['loggedIn']) == False) {
             </nav>
           </div>
 
-          <div id="reader" class="w-[600px]"></div>
+          <div class="grid grid-cols-6 gap-6">
+            <div class="rounded-sm h-fit border relative col-span-4 border-stroke bg-white px-5 pb-2.5 pt-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
+              <h4 class="text-xl font-bold text-black dark:text-white py-4">Cart</h4>
+              <div class="max-w-full overflow-x-auto">
+                <table class="w-full table-auto">
+                  <thead>
+                    <tr class="bg-gray-2 text-center dark:bg-meta-4">
+                      <th class=" px-4 py-4 font-medium text-black dark:text-white">
+                        Product
+                      </th>
+                      <th class="px-4 py-4 font-medium text-black dark:text-white">
+                        Price
+                      </th>
+                      <th class=" px-4 py-4 font-medium text-black dark:text-white">
+                        Quantity
+                      </th>
+                      <th class=" px-4 py-4 font-medium text-black dark:text-white">
+                        action
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody id="tb_cart">
+                    <tr>
 
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+              <div class="w-full col-span-2 mx-auto bg-white  dark:border-strokedark dark:bg-boxdark p-5 rounded-lg shadow-md">
+                <h2 class="text-center text-2xl font-semibold mb-4">QR Code Scanner</h2>
+                <div id="reader" class="w-full"></div>
+              </div>
+          </div>
         </div>
       </main>
       <!-- ===== Main Content End ===== -->
@@ -81,23 +113,22 @@ if (isset($_SESSION['loggedIn']) == False) {
       console.log(`Code matched = ${decodedText}`, decodedResult);
     }
 
-    function onScanFailure(error) {
-      // handle scan failure, usually better to ignore and keep scanning.
-      // for example:
-      console.warn(`Code scan error = ${error}`);
+    function onFail(error){
+
     }
+
 
     let html5QrcodeScanner = new Html5QrcodeScanner(
       "reader", {
         fps: 10,
         qrbox: {
-          width: 250,
-          height: 250
+          width: 200,
+          height: 200
         }
       },
       /* verbose= */
       false);
-    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+    html5QrcodeScanner.render(onScanSuccess,onFail);
   </script>
 </body>
 
