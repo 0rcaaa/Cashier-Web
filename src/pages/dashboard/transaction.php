@@ -90,7 +90,7 @@ if (isset($_SESSION['loggedIn']) == False) {
                   <tbody id="tb_cart">
                     <tr>
                       <td class="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                        <p class="text-sm text-center font-medium text-black dark:text-white">demo</p>
+                        <p id="productName" class="text-sm text-center font-medium text-black dark:text-white">demo</p>
                       </td>
                       <td class="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                         <p id="itemPrice" class="text-sm text-center font-medium text-black dark:text-white">Rp. 1.000</p>
@@ -141,13 +141,17 @@ if (isset($_SESSION['loggedIn']) == False) {
                 <div class="bg-white dark:border-strokedark dark:bg-boxdark p-5 rounded-lg shadow-md">
                   <h2 class="text-center text-2xl font-semibold mb-4">QR Code Scanner</h2>
                   <div id="reader" class="w-full"></div>
+                  <form action="">
+                    <input type="text" id="qr-result" disabled value="" class="hidden">
+                  </form>
                 </div>
                 <div class="bg-white dark:border-strokedark dark:bg-boxdark p-5 rounded-lg shadow-md">
                   <h1 class="text-center text-2xl font-semibold mb-4">Order Summary</h1>
                   <p class="text-lg">Total: Rp.<span id="sumTotal"> 0</span></p>
                   <p class="text-lg">Items:<span id="sumItems"> 0</span></p>
-                  <div class="">
-                    <button class="bg-primary block mx-auto p-4 mt-4 hover:bg-meta-4 w-auto cursor-pointer rounded" onclick="pay()">Payment Gate</button>
+                  <div class="flex flex-row justify-around items-center">
+                    <button class="bg-primary p-4 mt-4 hover:bg-meta-4 w-auto cursor-pointer rounded" onclick="paymentGateway()"><strong>Payment Gateway</strong></button>
+                    <button class="bg-primary p-4 mt-4 hover:bg-meta-4 w-auto cursor-pointer rounded" onclick="payCash()"><strong>Pay Cash</strong></button>
                   </div>
                 </div>
               </div>
@@ -168,31 +172,52 @@ if (isset($_SESSION['loggedIn']) == False) {
     const itemPrice = document.getElementById('itemPrice');
     const total = document.getElementById('total');
 
-    function updateTotal(){
-      let price = parseInt(itemPrice.innerText.replace("Rp.","").replace(".",""));
+    function updateTotal() {
+      let price = parseInt(itemPrice.innerText.replace("Rp.", "").replace(".", ""));
       let qty = document.getElementById('qty').value;
       let akhir = price * qty;
       total.innerText = `Rp. ${akhir.toLocaleString("id-ID")}`;
+      document.getElementById("sumTotal").innerText = ` ${akhir.toLocaleString("id-ID")}`;
+      document.getElementById("sumItems").innerText = ` ${qty}`;
     }
 
-    function increment(){
+    function increment() {
       let qty = document.getElementById('qty');
       qty.value = parseInt(qty.value) + 1;
       updateTotal();
     }
 
-    function decrement(){
+    function decrement() {
       let qty = document.getElementById('qty');
-      if(parseInt(qty.value) > 0){
+      if (parseInt(qty.value) > 0) {
         qty.value = parseInt(qty.value) - 1;
         updateTotal();
       }
     }
 
     //html5-qrcode handler
+
+
+    //api handler
+    function fetchProductData(qrcode){
+      fetch(<?=base_url()?>."/service/auth.php?action=pay",{
+        method:'POST',
+        Headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({qrcode:qrcode})
+      })
+      .then(response => response.json())
+      .then(data =>{
+        document.getElementById('productName').textContent = data.name;
+        document.getElementById('itemPrice').textContent = `Rp. ${data.price.toLocaleString()}`;
+        document.getElementById('qty').value = 1;
+        updateTotal();
+      })
+      .catch(error => console.error(error))
+    }
+    //
     function onScanSuccess(decodedText, decodedResult) {
-      // handle the scanned code as you like, for example:
-      console.log(`Code matched = ${decodedText}`, decodedResult);
+      document.getElementById('qr-result').value(decodedText);
+      fetchProductData(decodedText);
     }
 
     function onFail(error) {
