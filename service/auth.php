@@ -26,6 +26,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
 
 function payment($conn){
+    $data = json_encode(file_get_contents("php://input"),true);
+
+    if(!isset($data['qrcode'])){
+        echo json_encode(['error'=>'Data QR/Barcode Tidak Ditemukan']);
+        exit;
+    }
+    $uniqid = $data['qrcode'];
+    $stmt = $conn->prepare(`SELECT name, price FROM products WHERE id=$uniqid`);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if($result->num_rows>0){
+        $product = $result->fetch_assoc();
+        echo json_encode($product);
+    } else{
+        echo json_encode(['error'=>'product doesnt exist']);
+    }
 
 }
 

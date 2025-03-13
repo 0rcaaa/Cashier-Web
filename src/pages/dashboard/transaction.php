@@ -200,7 +200,7 @@ if (isset($_SESSION['loggedIn']) == False) {
 
     //api handler
     function fetchProductData(qrcode){
-      fetch(<?=base_url()?>."/service/auth.php?action=pay",{
+      fetch("<?=base_url()?>/service/auth.php?action=pay",{
         method:'POST',
         Headers:{'Content-Type':'application/json'},
         body: JSON.stringify({qrcode:qrcode})
