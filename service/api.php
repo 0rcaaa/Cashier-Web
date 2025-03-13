@@ -124,9 +124,7 @@ $arrow_icon = $percentage_change >= 0 ? 'up' : 'down';
         'percentage_profit' => $percentage_profit_change_formatted,
         'percentage_transaction' => $percentage_change_formatted,
         'profit_class' => $profit_class,
-        'percentage_class' => $percentage_class,
-        'profit_arrow' => $profit_arrow_icon,
-        'transaction_arrow' => $arrow_icon
+        'percentage_class' => $percentage_class
     ]);
     
     exit();

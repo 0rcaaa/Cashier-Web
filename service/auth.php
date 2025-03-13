@@ -70,7 +70,7 @@ include("connection.php");
                 // Jika "Remember Me" dicentang, buat token dan simpan dalam cookie serta database
                 if (isset($_POST['remember'])) {
                     $token = bin2hex(random_bytes(32)); // Token unik
-                    setcookie("auth_token", $token, time() + (86400 * 30), "/", "", true, true); // HTTP-Only & Secure
+                    setcookie("auth_token", $token, time() + (86400 * 30), "/", ".kasir.test", true, true); // HTTP-Only & Secure
 
                     // Simpan token ke database
                     $stmt = $conn->prepare("UPDATE admin SET token = ? WHERE email = ?");
