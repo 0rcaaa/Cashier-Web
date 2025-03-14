@@ -16,8 +16,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         case 'addProduct':
             add_product($conn);
             break;
-        case 'pay';
-            payment($conn);
+        case 'getProduct';
+            getProduct($conn);
             break;
         default:
             header('location: ../src/pages/auth/index.php');
@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 
-function payment($conn){
+function getProduct($conn){
     $data = json_encode(file_get_contents("php://input"),true);
 
     if(!isset($data['qrcode'])){
