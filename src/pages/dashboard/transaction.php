@@ -88,7 +88,7 @@ if (isset($_SESSION['loggedIn']) == False) {
                     </tr>
                   </thead>
                   <tbody id="cartData">
-                    
+
                   </tbody>
                 </table>
               </div>
@@ -96,11 +96,14 @@ if (isset($_SESSION['loggedIn']) == False) {
             <div class="w-full col-span-2 mx-auto ">
               <div class="flex flex-col gap-4">
                 <div class="bg-white dark:border-strokedark dark:bg-boxdark p-5 rounded-lg shadow-md">
+                <h1 class="text-xl font-semibold mb-1">Find Product</h1>
+                <input class="rounded border border-stroke bg-gray p-1 font-medium text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary" type="text" name="barcodeInput" id="barcodeInput">
+                <button onclick="barcodeInput()" class="bg-primary py-1 px-4 hover:bg-meta-4 w-auto cursor-pointer rounded"><strong>cari produk</strong></button>
+                </div>
+                <div class="bg-white dark:border-strokedark dark:bg-boxdark p-5 rounded-lg shadow-md">
                   <h2 class="text-center text-2xl font-semibold mb-4">QR Code Scanner</h2>
                   <div id="reader" class="w-full"></div>
-                  <form action="">
-                    <input type="text" id="qr-result" disabled value="" class="hidden">
-                  </form>
+                  <input type="text" id="qr-result" disabled value="" class="hidden">
                 </div>
                 <div class="bg-white dark:border-strokedark dark:bg-boxdark p-5 rounded-lg shadow-md">
                   <h1 class="text-center text-2xl font-semibold mb-4">Order Summary</h1>
@@ -125,66 +128,77 @@ if (isset($_SESSION['loggedIn']) == False) {
   <script src="<?= base_url() ?>/node_modules/html5-qrcode/html5-qrcode.min.js">
   </script>
   <script>
-    //cart handler
-    const itemPrice = document.getElementById('itemPrice');
-    const total = document.getElementById('total');
-    let qty = document.getElementById('qty').value;
-
-    function updateTotal(row) {
-      let price = parseInt(itemPrice.innerText.replace("Rp.", "").replace(".", ""));
-      let akhir = price * qty;
-      total.innerText = `Rp. ${akhir.toLocaleString("id-ID")}`;
-      document.getElementById("sumTotal").innerText = ` ${akhir.toLocaleString("id-ID")}`;
-      document.getElementById("sumItems").innerText = ` ${qty}`;
-    }
-
+    
+    
     //html5-qrcode handler
-    //api handler
-    function fetchProductData(qrcode){
-      fetch("<?=base_url()?>/service/auth.php?action=",{
-        method:'POST',
-        Headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({qrcode:qrcode})
-      })
-      .then(response => response.json())
-      .then(data =>{
-        document.getElementById('productName').textContent = data.name;
-        document.getElementById('itemPrice').textContent = `Rp. ${data.price.toLocaleString()}`;
-        document.getElementById('qty').value = 1;
-        updateTotal();
-      })
-      .catch(error => console.error(error))
-    }
-
+    
     //update value
     function onScanSuccess(decodedText, decodedResult) {
-      document.getElementById('qr-result').value(decodedText);
-      fetchProductData(decodedText);
+      console.log(decodedText)
+      fetchProductData(decodedText); 
+      //kirim data output scan
     }
-    function addProductRow(data){
+    
+    //api handler
+    function fetchProductData(qrcode) {
+      fetch("<?= base_url()?>/service/auth.php", {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            action: 'scanProduct',
+            qrcode: qrcode
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            console.log(data);
+            return;
+          }
+          addProductRow(data);
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    function barcodeInput() {
+    let barcode = document.getElementById("barcodeInput").value;
+
+    if (!barcode) {
+        alert("Masukkan barcode terlebih dahulu!");
+        return;
+    }
+
+    fetchProductData(barcode);
+}
+
+    function addProductRow(data) {
       const cartData = document.getElementById('cartData');
 
+      //check existing record
       let existData = document.querySelector(`tr[data-qr='${data.qrcode}']`);
-      if(existData){
+      if (existData) {
         qty.value = parseInt(qty.value) + 1;
         updateTotal(existData);
         return;
       }
 
+      //create record if there is no record
       let tr = document.createElement('tr');
-      tr.setAttribute("data-qr",data.qrcode);
+      tr.setAttribute("data-qr", data.qrcode);
       tr.innerHTML = `
                       <td class="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                        <p id="productName" class="text-sm text-center font-medium text-black dark:text-white">${}</p>
+                        <p id="productName" class="text-sm text-center font-medium text-black dark:text-white">${data.name}</p>
                       </td>
                       <td class="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                        <p id="itemPrice" class="text-sm text-center font-medium text-black dark:text-white">${}</p>
+                        <p id="itemPrice" class="text-sm text-center font-medium text-black dark:text-white">${data.price}</p>
                       </td>
                       <td class="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                         <div class="flex flex-row justify-center items-center gap-3">
-                          <button class="decrement bg-meta-1 align-middle cursor-pointer rounded-sm px-1 text-black">-</button>
+                          <button id="decrement" class="bg-meta-1 align-middle cursor-pointer rounded-sm px-1 text-black">-</button>
                           <input id="qty" type="text" class="text-sm max-w-4 text-center font-medium text-black dark:text-white" value="1">
-                          <button class="increment bg-meta-3 align-middle cursor-pointer rounded-sm px-1 text-black">+</button>
+                          <button id="increment" class="bg-meta-3 align-middle cursor-pointer rounded-sm px-1 text-black">+</button>
                         </div>
                       </td>
                       <td class="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
@@ -192,7 +206,7 @@ if (isset($_SESSION['loggedIn']) == False) {
                       </td>
                       <td class="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                         <div class="flex justify-center items-center space-x-3.5">
-                          <button  class="hover:text-primary cursor-pointer">
+                          <button id="removeBtn" class="hover:text-primary cursor-pointer">
                             <svg
                               class="fill-current"
                               width="18"
@@ -220,20 +234,54 @@ if (isset($_SESSION['loggedIn']) == False) {
 
       cartData.appendChild(tr);
       updateTotal(tr);
+      updateOrderSummary(tr);
 
-      tr.querySelector('.increment').addEventListener("click", ()=> {
-        tr.document.getElementById('qty').value = parseInt(tr.document.getElementById('qty').value) + 1;
+      tr.querySelector('#increment').addEventListener("click", () => {
+        tr.querySelector('#qty').value = parseInt(tr.querySelector('#qty').value) + 1;
         updateTotal(tr);
+        updateOrderSummary(tr);
       });
 
-      tr.querySelector('.decrement').addEventListener('click', ()=>{
+      tr.querySelector('#decrement').addEventListener('click', () => {
         let qty = tr.querySelector('#qty');
         let currentValue = parseInt(qty.value);
-        if(currentValue > 1){
+        if (currentValue > 1) {
           qty.value = currentValue - 1;
+        } else {
+          tr.remove();
         }
-        updateTotal();
+        updateTotal(tr);
+        updateOrderSummary(tr);
       });
+
+      tr.querySelector('#removeBtn').addEventListener("click",()=>{
+        tr.remove();
+        updateOrderSummary(tr);
+      });
+
+    }
+
+    //cart handler
+    function updateTotal(row) {
+      let qty = parseInt(row.querySelector("#qty").value) || 0;
+      let price = parseInt(row.querySelector("#itemPrice").textContent.replace(',','')) || 0;
+      row.querySelector('#total').textContent = (qty*price).toLocaleString();
+    }
+
+    function updateOrderSummary() {
+      let sumTotal = 0;
+      let sumItems = 0;
+      const cartData = document.getElementById('cartData').querySelectorAll('tr');
+
+      cartData.forEach(row => {
+        let qty = parseInt(row.querySelector("#qty").value) || 0;
+        let price = parseInt(row.querySelector("#itemPrice").textContent.replace(',', '')) || 0;
+        sumTotal += qty * price;
+        sumItems += qty;
+      });
+
+      document.getElementById('sumTotal').textContent = sumTotal.toLocaleString();
+      document.getElementById('sumItems').textContent = sumItems;
     }
 
     function onFail(error) {
@@ -245,7 +293,7 @@ if (isset($_SESSION['loggedIn']) == False) {
       "reader", {
         fps: 10,
         qrbox: {
-          width: 200,
+          width: 300,
           height: 200
         }
       },

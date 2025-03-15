@@ -8,7 +8,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $action = $_POST['action'];
+    $data = json_decode(file_get_contents("php://input"), true);
+    $action = $_POST['action'] ?? $data['action'] ?? '';
     switch ($action) {
         case 'login':
             login($conn);
@@ -16,8 +17,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         case 'addProduct':
             add_product($conn);
             break;
-        case 'getProduct';
-            getProduct($conn);
+        case 'scanProduct';
+            scanProduct($conn);
             break;
         default:
             header('location: ../src/pages/auth/index.php');
@@ -25,30 +26,41 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 
-function getProduct($conn){
-    $data = json_encode(file_get_contents("php://input"),true);
+function scanProduct($conn)
+{
 
-    if(!isset($data['qrcode'])){
-        echo json_encode(['error'=>'Data QR/Barcode Tidak Ditemukan']);
+    // Ambil data JSON dari request
+    $data = json_decode(file_get_contents("php://input"), true);
+
+    // Validasi input
+    if (!$data || !isset($data['qrcode'])) {
+        echo json_encode(['error' => 'Data QR/Barcode Tidak Ditemukan']);
         exit;
     }
-    $uniqid = $data['qrcode'];
-    $stmt = $conn->prepare(`SELECT name, price FROM products WHERE id=$uniqid`);
+
+    $code = trim($data['qrcode']); // Pastikan tidak ada spasi berlebih
+
+    // Gunakan prepared statement untuk menghindari SQL Injection
+    $stmt = $conn->prepare("SELECT name, price FROM products WHERE uniqcode = ?");
+    $stmt->bind_param("s", $code);
     $stmt->execute();
     $result = $stmt->get_result();
-    if($result->num_rows>0){
+
+    if ($result->num_rows > 0) {
         $product = $result->fetch_assoc();
         echo json_encode($product);
-    } else{
-        echo json_encode(['error'=>'product doesnt exist']);
+    } else {
+        echo json_encode(['error' => 'Produk tidak ditemukan', 'coba lgi']);
     }
 
+    $stmt->close();
+    $conn->close();
 }
 
 function login($conn)
 {
-session_start();
-include("connection.php");
+    session_start();
+    include("connection.php");
 
 
     if (isset($_COOKIE['auth_token'])) {
@@ -115,7 +127,7 @@ include("connection.php");
 
 function add_product($conn)
 {
-session_start();
+    session_start();
 
     // Debugging: Echo all submitted data
     //turn on to debug
@@ -127,7 +139,6 @@ session_start();
     $targetDIR = __DIR__ . '/../src/assets/images/product/';
     if (!file_exists($targetDIR)) {
         mkdir($targetDIR, 0777, true);
-        // print_r("Directory created");
     }
 
 
@@ -156,6 +167,10 @@ session_start();
     $new_name = time() . '_' . uniqid() . '.' . $file_ext;
     $uploadDIR = $targetDIR . $new_name;
 
+    if (!is_writable($targetDIR)) {
+        die("Error: Target directory is not writable.");
+    }
+
     if (!move_uploaded_file($file_tmp, $uploadDIR)) {
         die("Error while uploading the image");
     }
@@ -165,36 +180,34 @@ session_start();
     $price = $_POST['price'];
     $margin = $_POST['margin'];
     $stock = $_POST['stock'];
-    if($_POST['production'] == ''){
+    if ($_POST['production'] == '') {
         $production = NULL;
-    }elseif($_POST['production'] !== ''){
+    } elseif ($_POST['production'] !== '') {
         $production = $_POST['production'];
     }
-    if($_POST['exp'] == ''){
+    if ($_POST['exp'] == '') {
         $exp = NULL;
-    }elseif($_POST['exp'] !== ''){
+    } elseif ($_POST['exp'] !== '') {
         $exp = $_POST['exp'];
     }
     $brand = $_POST['brand'];
     $fid_category = $_POST['kategori'];
     $description = $_POST['Detail'];
     $img = 'src/assets/images/product/' . $new_name;
-
+    $uniqcode= "123";
     // Check if all required fields are set
-        $stmt = $conn->prepare("INSERT INTO products
-            (name, price, margin, stock, category_id, description, image, brand_id, production_date, expiration_date, created_at) 
+    $stmt = $conn->prepare("INSERT INTO products
+            (name, price, margin, stock, category_id, description, image, brand_id, production_date, uniqcode, expiration_date, created_at) 
             VALUES (?,?,?,?,?,?,?,?,?,?,NOW())");
-        $stmt->bind_param("sddiississ", $name, $price, $margin, $stock, $fid_category, $description, $img, $brand, $production, $exp);
+    $stmt->bind_param("sddiississs", $name, $price, $margin, $stock, $fid_category, $description, $img, $brand, $production,$uniqcode ,$exp);
     // $query = "INSERT INTO products (name, price, margin, stock, category_id, description, image, brand_id, production_date, expiration_date, created_at) VALUES ($name, $price, $margin, $stock, $fid_category, $description, $img, $brand, $production, $exp, NOW())";
     // echo $query;
 
-    if($stmt->execute()){
-        $_SESSION['success']= 'produk berhasil ditambahkan' ;
+    if ($stmt->execute()) {
+        $_SESSION['success'] = 'produk berhasil ditambahkan';
         header('location: ../src/pages/dashboard/add_product.php');
-    }else{
-        $_SESSION['err']= 'produk gagal ditambahkan' ;
+    } else {
+        $_SESSION['err'] = 'produk gagal ditambahkan';
         header('location: ../src/pages/dashboard/add_product.php');
-
     }
 }
-   
