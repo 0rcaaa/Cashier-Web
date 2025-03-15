@@ -194,12 +194,13 @@ function add_product($conn)
     $fid_category = $_POST['kategori'];
     $description = $_POST['Detail'];
     $img = 'src/assets/images/product/' . $new_name;
-    $uniqcode= "123";
+    $uniqcode = generate_varchar();
+
     // Check if all required fields are set
     $stmt = $conn->prepare("INSERT INTO products
-            (name, price, margin, stock, category_id, description, image, brand_id, production_date, uniqcode, expiration_date, created_at) 
-            VALUES (?,?,?,?,?,?,?,?,?,?,NOW())");
-    $stmt->bind_param("sddiississs", $name, $price, $margin, $stock, $fid_category, $description, $img, $brand, $production,$uniqcode ,$exp);
+            (name, price, margin, stock, category_id, description, image, brand_id, production_date, expiration_date, created_at, uniqcode) 
+            VALUES (?,?,?,?,?,?,?,?,?,?,NOW(),?)");
+    $stmt->bind_param("sddiississs", $name, $price, $margin, $stock, $fid_category, $description, $img, $brand, $production, $exp, $uniqcode);
     // $query = "INSERT INTO products (name, price, margin, stock, category_id, description, image, brand_id, production_date, expiration_date, created_at) VALUES ($name, $price, $margin, $stock, $fid_category, $description, $img, $brand, $production, $exp, NOW())";
     // echo $query;
 

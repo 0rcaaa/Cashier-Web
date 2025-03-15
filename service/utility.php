@@ -40,3 +40,10 @@ function rememberMe($conn)
     }
   }
 }
+
+function generate_varchar($length = 8) {
+  if ($length > 8) {
+      throw new Exception("Maksimum panjang adalah 30 karakter");
+  }
+  return substr(str_shuffle(str_repeat('0123456789', $length)), 0, $length);
+}
