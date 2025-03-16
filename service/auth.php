@@ -41,7 +41,7 @@ function scanProduct($conn)
     $code = trim($data['qrcode']); // Pastikan tidak ada spasi berlebih
 
     // Gunakan prepared statement untuk menghindari SQL Injection
-    $stmt = $conn->prepare("SELECT name, price FROM products WHERE uniqcode = ?");
+    $stmt = $conn->prepare("SELECT name, price, uniqcode AS qrcode FROM products WHERE uniqcode = ?");
     $stmt->bind_param("s", $code);
     $stmt->execute();
     $result = $stmt->get_result();
