@@ -65,9 +65,15 @@ if (isset($_SESSION['loggedIn']) == False) {
 
           <div class="grid grid-cols-6 gap-6">
             <div class="rounded-sm h-fit border relative col-span-4 border-stroke bg-white px-5 pb-2.5 pt-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
-              <h4 class="text-xl font-bold text-black dark:text-white py-4">Cart</h4>
+              <div class="flex justify-between py-4">
+                <h4 class="text-xl font-bold text-black dark:text-white ">Cart</h4>
+                <div class="p-1 rounded-lg shadow-md ">
+                  <input placeholder="Add by Uniqcode" class="rounded border border-stroke bg-gray p-1 font-medium text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary" type="text" name="barcodeInput" id="barcodeInput">
+                  <button onclick="barcodeInput()" class="bg-primary py-1 px-4 text-sm font-medium text-white hover:bg-meta-4 w-auto cursor-pointer rounded">Add Product</button>
+                </div>
+              </div>
               <div class="max-w-full overflow-x-auto">
-                <table class="w-full table-auto">
+                <table class="w-full table-auto mb-4">
                   <thead>
                     <tr class="bg-gray-2 text-center dark:bg-meta-4">
                       <th class=" px-4 py-4 font-medium text-black dark:text-white">
@@ -95,24 +101,39 @@ if (isset($_SESSION['loggedIn']) == False) {
             </div>
             <div class="w-full col-span-2 mx-auto ">
               <div class="flex flex-col gap-4">
-                <div class="bg-white dark:border-strokedark dark:bg-boxdark p-5 rounded-lg shadow-md">
-                <h1 class="text-xl font-semibold mb-1">Find Product</h1>
-                <input class="rounded border border-stroke bg-gray p-1 font-medium text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary" type="text" name="barcodeInput" id="barcodeInput">
-                <button onclick="barcodeInput()" class="bg-primary py-1 px-4 hover:bg-meta-4 w-auto cursor-pointer rounded"><strong>cari produk</strong></button>
-                </div>
+                
                 <div class="bg-white dark:border-strokedark dark:bg-boxdark p-5 rounded-lg shadow-md">
                   <h2 class="text-center text-2xl font-semibold mb-4">QR Code Scanner</h2>
                   <div id="reader" class="w-full"></div>
                   <input type="text" id="qr-result" disabled value="" class="hidden">
                 </div>
-                <div class="bg-white dark:border-strokedark dark:bg-boxdark p-5 rounded-lg shadow-md">
-                  <h1 class="text-center text-2xl font-semibold mb-4">Order Summary</h1>
-                  <p class="text-lg">Total: Rp.<span id="sumTotal"> 0</span></p>
-                  <p class="text-lg">Items:<span id="sumItems"> 0</span></p>
-                  <div class="flex flex-row justify-around items-center">
-                    <button class="bg-primary p-4 mt-4 hover:bg-meta-4 w-auto cursor-pointer rounded" onclick="paymentGateway()"><strong>Payment Gateway</strong></button>
-                    <button class="bg-primary p-4 mt-4 hover:bg-meta-4 w-auto cursor-pointer rounded" onclick="payCash()"><strong>Pay Cash</strong></button>
+
+                <div class="mt-6 w-full space-y-6 sm:mt-8 lg:mt-0 lg:max-w-xs xl:max-w-md">
+                  <div class="flow-root">
+                    <h1 class="text-xl font-medium dark:text-white text-black pb-2">Order Summary</h1>
+                    <div class="-my-3 divide-y divide-gray-200 dark:divide-gray-800">
+                      <dl class="flex items-center justify-between gap-4 py-3">
+                        <dt class="text-base font-normal text-gray-500 dark:text-gray-400">Subtotal</dt>
+                        <dd class="text-base font-medium text-gray-900 dark:text-white">IDR. <span id="sumTotal">-</span></dd>
+                      </dl>
+
+                      <dl class="flex items-center justify-between gap-4 py-3">
+                        <dt class="text-base font-normal text-gray-500 dark:text-gray-400">Savings</dt>
+                        <dd class="text-base font-medium text-green-500">0</dd>
+                      </dl>
+
+                      <dl class="flex items-center justify-between gap-4 py-3">
+                        <dt class="text-base font-normal text-gray-500 dark:text-gray-400">Items total</dt>
+                        <dd class="text-base font-medium text-gray-900 dark:text-white"><span id="sumItems">-</span></dd>
+                      </dl>
+
+                      <dl class="flex items-center justify-between gap-4 py-3">
+                        <dt class="text-base font-bold text-gray-900 dark:text-white">Total</dt>
+                        <dd class="text-base font-bold text-gray-900 dark:text-white">IDR. <span id="sumTotal">-</span></dd>
+                      </dl>
+                    </div>
                   </div>
+                  <button type="submit" class="flex w-full items-center justify-center rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white hover:bg-meta-4 focus:outline-none focus:ring-4  focus:ring-primary-300 cursor-pointer">Proceed to Payment</button>
                 </div>
               </div>
             </div>
@@ -128,20 +149,18 @@ if (isset($_SESSION['loggedIn']) == False) {
   <script src="<?= base_url() ?>/node_modules/html5-qrcode/html5-qrcode.min.js">
   </script>
   <script>
-    
-    
     //html5-qrcode handler
-    
+
     //update value
     function onScanSuccess(decodedText, decodedResult) {
       console.log(decodedText)
-      fetchProductData(decodedText); 
+      fetchProductData(decodedText);
       //kirim data output scan
     }
-    
+
     //api handler
     function fetchProductData(qrcode) {
-      fetch("<?= base_url()?>/service/auth.php", {
+      fetch("<?= base_url() ?>/service/auth.php", {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -163,15 +182,15 @@ if (isset($_SESSION['loggedIn']) == False) {
     }
 
     function barcodeInput() {
-    let barcode = document.getElementById("barcodeInput").value;
+      let barcode = document.getElementById("barcodeInput").value;
 
-    if (!barcode) {
+      if (!barcode) {
         alert("Masukkan barcode terlebih dahulu!");
         return;
-    }
+      }
 
-    fetchProductData(barcode);
-}
+      fetchProductData(barcode);
+    }
 
     function addProductRow(data) {
       const cartData = document.getElementById('cartData');
@@ -254,18 +273,57 @@ if (isset($_SESSION['loggedIn']) == False) {
         updateOrderSummary(tr);
       });
 
-      tr.querySelector('#removeBtn').addEventListener("click",()=>{
+      tr.querySelector('#removeBtn').addEventListener("click", () => {
         tr.remove();
         updateOrderSummary(tr);
       });
+    }
 
+    function Transaction() {
+
+      //transaction handler. POST the orrder Summary to the transactions table
+      const sumTotal = parseInt(document.getElementById('sumTotal').textContent.replace(',', ''));
+      const sumItems = parseInt(document.getElementById("sumItems"))
+      fetch("<?= base_url() ?>/service/auth", {
+        method: "POST",
+        header: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          action: "transaction",
+          member: "guest",
+          total_price: sumTotal,
+          productQTY: qty,
+          paid: "",
+          payMethod: ""
+        })
+      })
+
+      //transaction Details handler. POST record for each row
+      const cartData = document.getElementById('cartData').querySelectorAll('tr');
+      cartData.forEach(row => {
+        let productName = row.querySelector("#productName").textContent;
+        let total = row.querySelector("#total").textContent;
+        fetch("<?= base_url() ?>/service/auth.php", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            action: "transactionDetails",
+            productName: productName,
+            quantity: qty,
+            subtotal: total
+          })
+        })
+      })
     }
 
     //cart handler
     function updateTotal(row) {
       let qty = parseInt(row.querySelector("#qty").value) || 0;
-      let price = parseInt(row.querySelector("#itemPrice").textContent.replace(',','')) || 0;
-      row.querySelector('#total').textContent = (qty*price).toLocaleString();
+      let price = parseInt(row.querySelector("#itemPrice").textContent.replace(',', '')) || 0;
+      row.querySelector('#total').textContent = (qty * price).toLocaleString();
     }
 
     function updateOrderSummary() {
