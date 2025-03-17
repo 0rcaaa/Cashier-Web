@@ -101,7 +101,7 @@ if (isset($_SESSION['loggedIn']) == False) {
             </div>
             <div class="w-full col-span-2 mx-auto ">
               <div class="flex flex-col gap-4">
-                
+
                 <div class="bg-white dark:border-strokedark dark:bg-boxdark p-5 rounded-lg shadow-md">
                   <h2 class="text-center text-2xl font-semibold mb-4">QR Code Scanner</h2>
                   <div id="reader" class="w-full"></div>
@@ -133,7 +133,112 @@ if (isset($_SESSION['loggedIn']) == False) {
                       </dl>
                     </div>
                   </div>
-                  <button type="submit" class="flex w-full items-center justify-center rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white hover:bg-meta-4 focus:outline-none focus:ring-4  focus:ring-primary-300 cursor-pointer">Proceed to Payment</button>
+                  <button data-modal-target="default-modal" data-modal-toggle="default-modal" class="flex w-full items-center justify-center rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white hover:bg-meta-4 focus:outline-none focus:ring-4  focus:ring-primary-300 cursor-pointer">Proceed to Payment</button>
+                  <div id="default-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+
+                      <!-- Box 1 -->
+                      <div class="w-full md:w-[350px] h-[500px] bg-green-500 text-green-200 p-6 md:p-10 rounded-lg">
+                        <div class="font-bold text-3xl mb-6 flex items-center">
+                          <span class="text-2xl">$</span><span class="pl-1">599,00</span>
+                        </div>
+                        <div class="flex flex-col">
+                          <div class="flex justify-between text-sm mb-2">
+                            <span>Commission</span>
+                            <span class="flex items-center"><span class="pr-1">$</span>1.99</span>
+                          </div>
+                          <div class="flex justify-between text-sm mb-6">
+                            <span>Total</span>
+                            <span class="flex items-center"><span class="pr-1">$</span>600.99</span>
+                          </div>
+                          <div class="border-b border-green-300 mb-6"></div>
+                          <div class="mb-4">
+                            <span class="text-sm font-semibold">Invoice ID:</span>
+                            <span class="block pl-2">SN8478042099</span>
+                          </div>
+                          <div class="mb-6">
+                            <span class="text-sm font-semibold">Next payment:</span>
+                            <span class="block pl-2">22 July, 2018</span>
+                          </div>
+                          <div class="flex justify-between items-center text-sm mt-10">
+                            <div class="flex flex-col">
+                              <span>Customer Support:</span>
+                              <span>Online chat 24/7</span>
+                            </div>
+                            <button class="w-12 h-12 flex items-center justify-center bg-green-400 text-white rounded-full shadow">
+                              💬
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Box 2 -->
+                      <div class="w-full md:w-[450px] h-[580px] bg-white p-6 md:p-10 shadow-lg rounded-lg">
+                        <div class="flex justify-between items-center mb-6">
+                          <span class="text-xl font-bold">Payment Methods</span>
+                          <button class="text-green-500 hover:text-green-300">☰</button>
+                        </div>
+
+                        <!-- Tabs -->
+                        <div class="flex border-b-2 border-gray-300 mb-6">
+                          <button class="pb-2 border-b-2 border-green-500 text-green-600 font-semibold">Credit Card</button>
+                          <button class="ml-4 pb-2 text-gray-600 hover:text-green-500">Mobile Payment</button>
+                          <button class="ml-auto pb-2 text-gray-600 hover:text-green-500">+ More</button>
+                        </div>
+
+                        <!-- Payment Options -->
+                        <div class="flex items-center mb-6">
+                          <button class="w-10 h-10 flex items-center justify-center bg-gray-300 rounded-full mr-4 text-black">+</button>
+                          <div class="flex space-x-4">
+                            <label class="flex items-center cursor-pointer">
+                              <input type="radio" name="card" class="hidden" checked>
+                              <span class="px-4 py-2 border border-gray-300 rounded-full hover:bg-green-100">+5949</span>
+                            </label>
+                            <label class="flex items-center cursor-pointer">
+                              <input type="radio" name="card" class="hidden">
+                              <span class="px-4 py-2 border border-gray-300 rounded-full hover:bg-green-100">+3894</span>
+                            </label>
+                          </div>
+                        </div>
+
+                        <!-- Form -->
+                        <form>
+                          <div class="mb-4">
+                            <span class="block text-gray-700">Credit Card</span>
+                            <div class="relative">
+                              <input class="w-full border-b-2 border-gray-300 focus:outline-none py-2" type="text" value="5136 1845 5468 3894">
+                              <span class="absolute right-2 top-2"><img src="https://www.freepnglogos.com/uploads/mastercard-png/mastercard-logo-logok-15.png" class="w-10"></span>
+                            </div>
+                          </div>
+
+                          <div class="flex gap-4">
+                            <div class="w-1/2 mb-4">
+                              <span class="block text-gray-700">Expiration Date</span>
+                              <div class="relative">
+                                <input class="w-full border-b-2 border-gray-300 focus:outline-none py-2" type="text" value="05/20">
+                                <span class="absolute right-2 top-2">📅</span>
+                              </div>
+                            </div>
+                            <div class="w-1/2 mb-4">
+                              <span class="block text-gray-700">Code CVV</span>
+                              <div class="relative">
+                                <input class="w-full border-b-2 border-gray-300 focus:outline-none py-2" type="password" value="123">
+                                <span class="absolute right-2 top-2">🔒</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="mb-4">
+                            <span class="block text-gray-700">Name</span>
+                            <div class="relative">
+                              <input class="w-full border-b-2 border-gray-300 focus:outline-none py-2 uppercase" type="text" value="VALDIMIR BEREZOVKIY">
+                              <span class="absolute right-2 top-2">👤</span>
+                            </div>
+                          </div>
+
+                          <button class="w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 transition">Pay $599.00</button>
+                        </form>
+                      </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -146,14 +251,14 @@ if (isset($_SESSION['loggedIn']) == False) {
   </div>
   <!-- ===== Page Wrapper End ===== -->
   <script defer src="../../js/bundle.js"></script>
-  <script src="<?= base_url() ?>/node_modules/html5-qrcode/html5-qrcode.min.js">
-  </script>
+  <script src="<?= base_url() ?>/node_modules/html5-qrcode/html5-qrcode.min.js"></script>
+  <script src="<?= base_url() ?>/node_modules/flowbite/dist/flowbite.min.js"></script>
   <script>
     //html5-qrcode handler
 
     //update value
     function onScanSuccess(decodedText, decodedResult) {
-      console.log(decodedText)
+      console.log(decodedText);
       fetchProductData(decodedText);
       //kirim data output scan
     }
