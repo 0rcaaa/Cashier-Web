@@ -20,6 +20,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         case 'scanProduct';
             scanProduct($conn);
             break;
+        case 'verify':
+            verify($conn);
+            break;
         default:
             header('location: ../src/pages/auth/index.php');
             exit;
@@ -30,13 +33,12 @@ function verify($conn){
     session_start();
     $email = $_POST['email'];
 
-    $stmt = $conn->prepare("SELECT * FROM admin WWHERE email =? LIMIT 1");
+    $stmt = $conn->prepare("SELECT * FROM admin WHERE email =? LIMIT 1");
     $stmt->bind_param('s', $email);
     $result = $stmt->execute();
     $result = $stmt->get_result();
     if($result->num_rows > 0){
-        $row = $result->fetch_assoc();
-        $idAcc = $row['id'];
+        $idAcc = $result->fetch_assoc()['id'];
         $characters = '0123456789';
         $length = 4; // Panjang kode yang diinginkan
         $token = '';
@@ -45,7 +47,7 @@ function verify($conn){
             $token .= $characters[rand(0, strlen($characters) - 1)];
         }
 
-        $stmt = $conn->prepare("INSERT INTO verify_token (fid_admin, token, expired_at) VALUES (?, ?, NOW() + INTERVAL 1 HOUR)");
+        $stmt = $conn->prepare("INSERT INTO verify_tokens (fid_acc, token, exp_at) VALUES (?, ?, NOW() + INTERVAL 1 HOUR)");
         $stmt->bind_param('is', $idAcc, $token);
         if($stmt->execute()){
             header('location: sendToken.php?email='.$email.'&token='.$token);
