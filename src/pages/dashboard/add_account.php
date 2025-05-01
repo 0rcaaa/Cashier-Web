@@ -78,66 +78,55 @@ if (isset($_SESSION['loggedIn']) == False) {
                   </div>
                   <div class="p-7">
 
-                    <div class="mb-5.5 flex flex-col gap-5.5 sm:flex-row">
-                      <div class="w-full sm:w-1/2">
+                    <div class="mb-5.5">
+                      <div class="w-full">
                         <label
                           class="mb-3 block text-sm font-medium text-black dark:text-white"
-                          for="productName">Product Name</label>
+                          for="username">Full Name</label>
                         <input
                           class="w-full rounded border border-stroke bg-gray px-4.5 py-3 font-medium text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
                           type="text"
-                          name="productName"
-                          id="productName" />
-                      </div>
-
-                      <div class="w-full sm:w-1/2">
-                        <label
-                          class="mb-3 block text-sm font-medium text-black dark:text-white"
-                          for="stock">Stock</label>
-                        <input
-                          class="w-full rounded border border-stroke bg-gray px-4.5 py-3 font-medium text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
-                          type="text"
-                          name="stock"
-                          id="stock" />
+                          name="username"
+                          id="username" />
                       </div>
                     </div>
 
-                    <div class="mb-5.5 flex flex-col gap-5.5 sm:flex-row">
-                      <div class="w-full sm:w-1/2">
+                    <div class="mb-5.5">
+                      <div class="w-full">
                         <label
                           class="mb-3 block text-sm font-medium text-black dark:text-white"
-                          for="price">Starting Price</label>
+                          for="email">Email</label>
                         <input
                           class="w-full rounded border border-stroke bg-gray px-4.5 py-3 font-medium text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
                           type="text"
-                          placeholder="Sebelum margin"
-                          name="price"
-                          id="price" />
+                          name="email"
+                          id="email" />
                       </div>
+                    </div>
 
-                      <div class="w-full sm:w-1/2">
+                    <div class="mb-5.5">
+                      <div class="w-full">
                         <label
                           class="mb-3 block text-sm font-medium text-black dark:text-white"
-                          for="margin">Margin</label>
+                          for="password">Password</label>
                         <input
-                          class="[&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none 
-                              [&::-moz-appearance:textfield] w-full rounded border border-stroke bg-gray px-4.5 py-3 font-medium text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
-                          type="number"
-                          name="margin"
-                          placeholder="Max 3 Digit"
-                          id="margin" />
+                          class="w-full rounded border border-stroke bg-gray px-4.5 py-3 font-medium text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
+                          type="password"
+                          name="password"
+                          id="password" />
                       </div>
                     </div>
 
                     <div class="mb-5.5">
                       <label
                         class="mb-3 block text-sm font-medium text-black dark:text-white"
-                        for="kategori">Category</label>
+                        for="kategori">Role</label>
                       <select
                         class=" w-full rounded border border-stroke bg-gray px-4.5 py-3 font-medium text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
                         name="kategori"
                         id="kategori">
-                        <option value="" class="dark:text-white">--- Pilih kategori ---</option>
+                        <option value="" class="dark:text-white">kasir</option>
+                        <option value="" class="dark:text-white">admin</option>
                       </select>
                     </div>
 
@@ -192,7 +181,7 @@ if (isset($_SESSION['loggedIn']) == False) {
                   <div
                     class="border-b border-stroke px-7 py-4 dark:border-strokedark">
                     <h3 class="font-medium text-2xl text-center text-black dark:text-white">
-                      Product Image
+                      User Profile
                     </h3>
                   </div>
                   <div class="p-7">
@@ -263,12 +252,12 @@ if (isset($_SESSION['loggedIn']) == False) {
                   </button>
                   <button
                     class="flex justify-center rounded bg-primary px-6 py-2 font-medium text-gray hover:bg-opacity-90"
-                    type="submit" value="addProduct" name="action">
+                    type="submit" value="acc" name="action">
                     Save
                   </button>
                 </div>
               </div>
-              <form />
+            </form>
               <!-- ====== Settings Section End -->
           </div>
         </div>
@@ -280,54 +269,9 @@ if (isset($_SESSION['loggedIn']) == False) {
   <!-- ===== Page Wrapper End ===== -->
   <script>
     document.addEventListener("DOMContentLoaded", function() {
-      populateCategoryDropdown();
       setupImageUpload();
-      setupMarginInput();
     });
 
-    function populateCategoryDropdown() {
-      const kategori = document.getElementById("kategori");
-
-      fetch("<?= base_url() ?>/service/api.php?action=getCategory")
-        .then(response => response.json())
-        .then(data => {
-          data.forEach(item => {
-            const option = document.createElement("option");
-            option.value = item.id;
-            option.textContent = item.name;
-            kategori.appendChild(option);
-          });
-        });
-    }
-
-    document.getElementById("price").addEventListener("input", function(event) {
-      let inputValue = event.target.value.replace(/[^\d,]/g, ""); // Hanya angka dan koma
-      inputValue = inputValue.replace(/,/g, "."); // Ganti koma dengan titik (opsional)
-
-      let formattedValue = formatRupiah(inputValue);
-      event.target.value = formattedValue;
-    });
-
-    function formatRupiah(angka) {
-      let numberString = angka.replace(/\D/g, "").toString();
-      let split = numberString.split(",");
-      let sisa = split[0].length % 3;
-      let rupiah = split[0].substr(0, sisa);
-      let ribuan = split[0].substr(sisa).match(/\d{3}/g);
-
-      if (ribuan) {
-        let separator = sisa ? "." : "";
-        rupiah += separator + ribuan.join(".");
-      }
-
-      return "Rp. " + rupiah + (split[1] ? "," + split[1] : "");
-    }
-
-    // Saat form dikirim, format angka ke bentuk yang bisa diterima oleh backend
-    document.querySelector("form").addEventListener("submit", function() {
-      let priceInput = document.getElementById("price");
-      priceInput.value = priceInput.value.replace(/[^0-9,]/g, "").replace(/\./g, ""); // Hapus "Rp." & titik pemisah ribuan
-    });
 
     function resetImage() {
       const img = document.getElementById('previewImage');
@@ -361,26 +305,6 @@ if (isset($_SESSION['loggedIn']) == False) {
       });
     }
 
-    function setupMarginInput() {
-      const marginInput = document.getElementById("margin");
-
-      marginInput.addEventListener("input", function() {
-        // Hapus karakter selain angka
-        this.value = this.value.replace(/\D/g, "");
-
-        // Batasi hanya 3 digit
-        if (this.value.length > 3) {
-          this.value = this.value.slice(0, 3);
-        }
-        if (this.value > 100) {
-          this.value = 100;
-        }
-
-        if (this.value <= 0) {
-          this.value = 0;
-        }
-      });
-    }
   </script>
   <script defer src="../../js/bundle.js"></script>
 
