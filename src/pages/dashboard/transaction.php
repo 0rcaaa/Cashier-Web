@@ -118,131 +118,15 @@ if (isset($_SESSION['loggedIn']) == False) {
                       </dl>
 
                       <dl class="flex items-center justify-between gap-4 py-3">
-                        <dt class="text-base font-normal text-gray-500 dark:text-gray-400">Savings</dt>
-                        <dd class="text-base font-medium text-green-500">0</dd>
-                      </dl>
-
-                      <dl class="flex items-center justify-between gap-4 py-3">
                         <dt class="text-base font-normal text-gray-500 dark:text-gray-400">Items total</dt>
                         <dd class="text-base font-medium text-gray-900 dark:text-white"><span id="sumItems">-</span></dd>
                       </dl>
-
-                      <dl class="flex items-center justify-between gap-4 py-3">
-                        <dt class="text-base font-bold text-gray-900 dark:text-white">Total</dt>
-                        <dd class="text-base font-bold text-gray-900 dark:text-white">IDR. <span id="sumTotal">-</span></dd>
-                      </dl>
                     </div>
                   </div>
-                  <button data-modal-target="default-modal" data-modal-toggle="default-modal" class="flex w-full items-center justify-center rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white hover:bg-meta-4 focus:outline-none focus:ring-4  focus:ring-primary-300 cursor-pointer">Proceed to Payment</button>
-                  <div
-                    id="default-modal"
-                    tabindex="-1"
-                    aria-hidden="true"
-                    class="hidden overflow-y-auto flex overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
-                    <!-- Box 1 -->
-                    <div
-                      class="w-full md:w-[350px] h-[500px] bg-primary text-white p-6 md:p-10 rounded-lg">
-                      <div class="font-bold text-3xl mb-6 flex items-center">
-                        Invoice
-                      </div>
-                      <div class="overflow-y-auto max-h-full pr-2">
-                        <div class="flex flex-col justify-between h-[200px]">
-                          <div class="flex flex-col" id="listData">
-                            <div class="flex justify-between text-sm mb-2">
-                              <span>Commission</span>
-                              <span class="flex items-center"><span class="pr-1">$</span>1.99</span>
-                            </div>
-                            <div class="flex justify-between text-sm mb-2">
-                              <span>Commission</span>
-                              <span class="flex items-center"><span class="pr-1">$</span>1.99</span>
-                            </div>
-                            <div class="border-b border-white mb-6"></div>
-                            <div class="flex justify-between text-lg mb-6">
-                              <span>Total</span>
-                              <span class="flex items-center font-bold"><span class="pr-1">$</span>600.99</span>
-                            </div>
-                          </div>
-                          <div class="flex justify-between">
-                            <div class="mb-4">
-                              <span class="text-sm font-semibold">Invoice ID:</span>
-                              <span class="block">SN8478042099</span>
-                            </div>
-                            <div class="mb-6">
-                              <span class="text-sm font-semibold">DateT:</span>
-                              <span class="block">22 July, 2018</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Box 2 -->
-                    <div
-                      class="w-full md:w-[450px] h-[580px] bg-boxdark p-6 md:p-10 shadow-lg rounded-lg">
-                      <div class="flex justify-between items-center mb-6">
-                        <span class="text-xl text-white font-bold">Payment Methods</span>
-                        <button class="text-white hover:text-primary">☰</button>
-                      </div>
-
-                      <!-- Tabs -->
-                      <div class="flex border-b-2 border-gray-300 mb-6">
-                        <button class="pb-2 border-b-2 border-meta-5 text-meta-5 font-semibold">
-                          Credit Card
-                        </button>
-                        <button class="ml-4 pb-2 text-gray-300 font-semibold hover:text-primary">
-                          Mobile Payment
-                        </button>
-                      </div>
-
-                      <!-- Form -->
-                      <form>
-                        <div class="mb-4">
-                          <span class="block text-gray-400">Member</span>
-                          <div class="relative">
-                            <input
-                              class="w-full border-b-2 border-gray-300 text-white focus:outline-none py-2 uppercase"
-                              type="text"
-                              value="VALDIMIR BEREZOVKIY" />
-                            <span class="absolute right-2 top-2">👤</span>
-                          </div>
-                        </div>
-                        <div class="mb-4">
-                          <span class="block text-gray-400">Use Points (1000)</span>
-                          <div class="relative">
-                            <select class="w-full border-b-2 text-white border-gray-300 focus:outline-none py-2" name="" id="">
-                              <option value="">Discount 20% (1000 Points)</option>
-                            </select>
-                          </div>
-                        </div>
-
-                        <div class="mb-4">
-                          <span class="block text-gray-400">Cash</span>
-                          <div class="relative">
-                            <input
-                              class="w-full border-b-2 border-gray-300 text-white focus:outline-none py-2 uppercase"
-                              type="text"
-                              value="102938" />
-                          </div>
-                        </div>
-
-                        <div class="mb-4">
-                          <span class="block text-gray-400">Exchange</span>
-                          <div class="relative">
-                            <input
-                              class="w-full border-b-2 border-gray-300 text-white focus:outline-none py-2 uppercase"
-                              type="text"
-                              disabled
-                              value="69696" />
-                          </div>
-                        </div>
-
-                        <button
-                          class="w-full bg-primary text-white py-3 rounded-lg hover:bg-bodydark transition">
-                          Pay $599.00
-                        </button>
-                      </form>
-                    </div>
-                  </div>
+                  <form id="transactionForm" method="POST" action="./confirm_transaction.php">
+                    <input type="hidden" name="cartData" id="cartDataInput">
+                  </form>
+                  <button onclick="submitTransaction()" class="flex w-full items-center justify-center rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white hover:bg-meta-4 focus:outline-none focus:ring-4  focus:ring-primary-300 cursor-pointer">Proses Transaksi</button>
                 </div>
               </div>
             </div>
@@ -258,7 +142,8 @@ if (isset($_SESSION['loggedIn']) == False) {
   <script src="<?= base_url() ?>/node_modules/html5-qrcode/html5-qrcode.min.js"></script>
   <script src="<?= base_url() ?>/node_modules/flowbite/dist/flowbite.min.js"></script>
   <script>
-    //html5-qrcode handler
+
+    
 
     //update value
     function onScanSuccess(decodedText, decodedResult) {
@@ -388,53 +273,52 @@ if (isset($_SESSION['loggedIn']) == False) {
       });
     }
 
-    function Transaction() {
+    //ambil data dari table 
+    function collectCartData() {
+      const cartRows = document.getElementById('cartData').querySelectorAll('tr');
+      const items = [];
 
-      //transaction handler. POST the orrder Summary to the transactions table
-      const sumTotal = parseInt(document.getElementById('sumTotal').textContent.replace(',', ''));
-      const sumItems = parseInt(document.getElementById("sumItems"))
-      fetch("<?= base_url() ?>/service/auth", {
-        method: "POST",
-        header: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          action: "transaction",
-          member: "guest",
-          total_price: sumTotal,
-          productQTY: qty,
-          paid: "",
-          payMethod: ""
-        })
-      })
+      cartRows.forEach(row => {
+        const qrcode = row.getAttribute('data-qr');
+        const name = row.querySelector('#productName').textContent;
+        const price = parseInt(row.querySelector("#itemPrice").textContent.replace(',', '')) || 0;
+        const qty = parseInt(row.querySelector("#qty").value) || 0;
+        const total = qty * price;
 
-      //transaction Details handler. POST record for each row
-      const cartData = document.getElementById('cartData').querySelectorAll('tr');
-      cartData.forEach(row => {
-        let productName = row.querySelector("#productName").textContent;
-        let total = row.querySelector("#total").textContent;
-        fetch("<?= base_url() ?>/service/auth.php", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            action: "transactionDetails",
-            productName: productName,
-            quantity: qty,
-            subtotal: total
-          })
-        })
-      })
+        items.push({
+          qrcode: qrcode,
+          name: name,
+          price: price,
+          qty: qty,
+          total: total
+        });
+      });
+
+      return items;
     }
 
-    //cart handler
+    //kirim data yang di ambil dari table ke page selanjutnya sebagai array json ketika button proses transaksi di klik
+    function submitTransaction() {
+      const cartItems = collectCartData();
+
+      if (cartItems.length === 0) {
+        alert('Keranjang masih kosong!');
+        return;
+      }
+
+      document.getElementById('cartDataInput').value = JSON.stringify(cartItems);
+      document.getElementById('transactionForm').submit();
+    }
+
+
+    //update total price
     function updateTotal(row) {
       let qty = parseInt(row.querySelector("#qty").value) || 0;
       let price = parseInt(row.querySelector("#itemPrice").textContent.replace(',', '')) || 0;
       row.querySelector('#total').textContent = (qty * price).toLocaleString();
     }
 
+    //update sum total price and item
     function updateOrderSummary() {
       let sumTotal = 0;
       let sumItems = 0;
@@ -450,8 +334,9 @@ if (isset($_SESSION['loggedIn']) == False) {
       document.getElementById('sumTotal').textContent = sumTotal.toLocaleString();
       document.getElementById('sumItems').textContent = sumItems;
     }
-    function onFail(error) {
 
+    function onFail(error) {
+      //kosong 
     }
 
 
@@ -463,7 +348,6 @@ if (isset($_SESSION['loggedIn']) == False) {
           height: 200
         }
       },
-      /* verbose= */
       false);
     html5QrcodeScanner.render(onScanSuccess, onFail);
   </script>
