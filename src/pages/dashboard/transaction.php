@@ -121,9 +121,26 @@ if (isset($_SESSION['loggedIn']) == False) {
                         <dt class="text-base font-normal text-gray-500 dark:text-gray-400">Items total</dt>
                         <dd class="text-base font-medium text-gray-900 dark:text-white"><span id="sumItems">-</span></dd>
                       </dl>
+
+                      <dl class="flex items-center justify-between gap-4 py-3">
+                        <dt class="text-base font-normal text-gray-500 dark:text-gray-400">Member</dt>
+                        <dd class="text-base font-medium text-gray-900 dark:text-white"><input class="rounded border border-stroke bg-gray px-4.5 py-1 font-medium text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary" type="text" name="memberPhone" placeholder="Fill member by phone number"></dd>
+                      </dl>
+
+                      <!-- <dl class="flex items-center justify-between gap-4 py-3">
+                        <dt class="text-base font-normal text-gray-500 dark:text-gray-400">Savings</dt>
+                        <dd class="text-base font-medium text-green-500"><select name="" id="dicount">
+                          <option value="">-</option>
+                        </select></dd>
+                      </dl> -->
+
+                      <dl class="flex items-center justify-between gap-4 py-3">
+                        <dt class="text-base font-bold text-gray-900 dark:text-white">Total</dt>
+                        <dd class="text-base font-bold text-gray-900 dark:text-white">IDR. <span id="subTotal">-</span></dd>
+                      </dl>
                     </div>
                   </div>
-                  <form id="transactionForm" method="POST" action="./confirm_transaction.php">
+                  <form id="transactionForm" method="POST" action="">
                     <input type="hidden" name="cartData" id="cartDataInput">
                   </form>
                   <button onclick="submitTransaction()" class="flex w-full items-center justify-center rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white hover:bg-meta-4 focus:outline-none focus:ring-4  focus:ring-primary-300 cursor-pointer">Proses Transaksi</button>
@@ -190,7 +207,7 @@ if (isset($_SESSION['loggedIn']) == False) {
       const cartData = document.getElementById('cartData');
 
       //check existing record
-      let existData = document.querySelector(`tr[data-qr='${data.qrcode}']`);
+      let existData = document.querySelector(`tr[data-product='${data.id}']`);
       if (existData) {
         qty.value = parseInt(qty.value) + 1;
         updateTotal(existData);
@@ -199,7 +216,7 @@ if (isset($_SESSION['loggedIn']) == False) {
 
       //create record if there is no record
       let tr = document.createElement('tr');
-      tr.setAttribute("data-qr", data.qrcode);
+      tr.setAttribute("data-product", data.id);
       tr.innerHTML = `
                       <td class="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                         <p id="productName" class="text-sm text-center font-medium text-black dark:text-white">${data.name}</p>
@@ -279,14 +296,14 @@ if (isset($_SESSION['loggedIn']) == False) {
       const items = [];
 
       cartRows.forEach(row => {
-        const qrcode = row.getAttribute('data-qr');
+        const id = row.getAttribute('data-product');
         const name = row.querySelector('#productName').textContent;
         const price = parseInt(row.querySelector("#itemPrice").textContent.replace(',', '')) || 0;
         const qty = parseInt(row.querySelector("#qty").value) || 0;
         const total = qty * price;
 
         items.push({
-          qrcode: qrcode,
+          id: id,
           name: name,
           price: price,
           qty: qty,
@@ -300,14 +317,43 @@ if (isset($_SESSION['loggedIn']) == False) {
     //kirim data yang di ambil dari table ke page selanjutnya sebagai array json ketika button proses transaksi di klik
     function submitTransaction() {
       const cartItems = collectCartData();
+      const memberPhone = document.querySelector('input[name="memberPhone"]').value;
 
       if (cartItems.length === 0) {
         alert('Keranjang masih kosong!');
         return;
       }
 
+      console.log(JSON.stringify({
+            action: 'order',
+            cartData: cartItems,
+            memberPhone: memberPhone
+          }));
       document.getElementById('cartDataInput').value = JSON.stringify(cartItems);
-      document.getElementById('transactionForm').submit();
+      fetch("<?= base_url() ?>/service/auth.php", {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            action: 'order',
+            cartData: cartItems,
+            memberPhone: memberPhone
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            console.log(data.message);
+            return;
+          } else {
+            console.error(data.error);
+            alert('Terjadi kesalahan saat memproses transaksi.');
+          }
+        })
+        .catch(error => console.error('Error:', error));
+
+      // document.getElementById('transactionForm').submit();
     }
 
 

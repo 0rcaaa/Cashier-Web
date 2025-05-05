@@ -1,6 +1,13 @@
 <?php
 session_start();
 require '../../../service/utility.php';
+require '../../../service/connection.php';
+
+
+ini_set('display_errors', '1');
+ini_set('display_startup_errors', '1');
+error_reporting(E_ALL);
+
 
 
 if (!isset($_SESSION['loggedIn'])) {
@@ -8,8 +15,50 @@ if (!isset($_SESSION['loggedIn'])) {
   exit();
 }
 
-// Ambil data cart dari POST
-$cart = json_decode($_POST['cartData'], true);
+function get_cart($order_id, $conn)
+{
+  $stmt = $conn->prepare("SELECT 
+  o.total_items AS total_items, 
+  o.total_price AS total_price,
+  m.name AS nama_pelanggan, 
+  p.name AS product_name, 
+  p.uniqcode AS qrcode, 
+  p.price AS price, 
+  od.qty AS qty
+FROM orders o
+JOIN order_details od ON o.id = od.order_fid
+JOIN products p ON od.product_fid = p.id
+LEFT JOIN members m ON o.member_id = m.id
+WHERE o.id = ?
+  ");
+  $stmt->bind_param("s", $order_id);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  $cart = [];
+
+  while ($row = $result->fetch_assoc()) {
+    var_dump($row);
+    $cart[] = [
+      'name' => $row['product_name'],
+      'qrcode' => $row['qrcode'],
+      'price' => (float)$row['price'],
+      'qty' => (float)$row['qty']
+    ];
+  }
+
+  var_dump($cart);
+
+  return $cart;
+}
+
+if (isset($_GET['order_id'])) {
+  $order_id = $_GET['order_id'];
+  $cart = get_cart($order_id, $conn);
+} else {
+  header('location: transaction.php');
+  exit();
+}
+
 
 function format_rupiah($angka)
 {
@@ -89,7 +138,7 @@ function format_rupiah($angka)
     </div>
   </div>
 
-  <script>
+  <!-- <script>
     const cashInput = document.querySelector('input[name="cash"]');
     const exchangeDisplay = document.getElementById('exchange');
 
@@ -133,7 +182,7 @@ function format_rupiah($angka)
 
       return true;
     }
-  </script>
+  </script> -->
 </body>
 
 </html>

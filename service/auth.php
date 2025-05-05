@@ -3,6 +3,10 @@ session_start();
 include("utility.php");
 include("connection.php");
 
+ini_set('display_errors', '1');
+ini_set('display_startup_errors', '1');
+error_reporting(E_ALL);
+
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
     header('index.php');
 }
@@ -23,9 +27,74 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         case 'verify':
             verify($conn);
             break;
+        case 'order':
+            order($conn);
+            break;
         default:
             header('location: ../src/pages/auth/index.php');
             exit;
+    }
+}
+
+function order($conn){
+    $json = file_get_contents("php://input");
+    $data = json_decode($json, true);
+
+    if(!$data || !isset($data['cartData']) || count($data['cartData']) == 0){
+        http_response_code(400);
+        echo json_encode(['error' => 'Data tidak ditemukan']);
+        exit;
+    }
+
+    $total_price = 0;
+    $total_items = 0;
+    foreach($data['cartData'] as $item){
+        $total_price += $item['total'];
+        $total_items += $item['qty'];
+    }
+
+    $stmt = $conn->prepare("SELECT id FROM admin WHERE email = ? LIMIT 1");
+    $stmt->bind_param('s', $_SESSION['email']);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if($result->num_rows > 0){
+        $user_id = $result->fetch_assoc()['id'];
+    } else{
+        http_response_code(400);
+        echo json_encode(['error' => 'User tidak ditemukan']);
+        exit;
+    }
+
+    if(!$data['memberPhone']){
+        $stmt = $conn->prepare("SELECT id FROM members WHERE phone = ? LIMIT 1");
+        $stmt->bind_param('s', $data['memberPhone']);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $member_id = $result->fetch_assoc()['id'];
+    } else{
+        $member_id = 0;
+    }
+
+    $stmt = $conn->prepare("INSERT INTO orders (user_id, member_id, total_items, total_price) VALUES (?,?,?,?)");
+    $stmt->bind_param('iiid', $user_id, $member_id, $total_items, $total_price);
+
+    if($stmt->execute()){
+        $order_id = $stmt->insert_id;
+        $stmtDetail = $conn->prepare("INSERT INTO order_details (order_fid, product_fid, qty, total_price) VALUES (?,?,?,?)");
+        foreach($data['cartData'] as $item){
+            $stmtDetail->bind_param('iiid', $order_id, $item['id'], $item['qty'], $item['price']);
+            if(!$stmtDetail->execute()){
+                http_response_code(500);
+                echo json_encode(['error' => 'Gagal menyimpan item pesanan']);
+                exit;
+            }
+        }
+        $stmtDetail->close();
+        header('location: ../src/pages/dashboard/confirm_transaction.php?order_id='.$order_id);
+        exit;
+    } else{
+        http_response_code(500);
+        echo json_encode(['error' => 'Gagal membuat pesanan']);
     }
 }
 
@@ -76,7 +145,7 @@ function scanProduct($conn)
     $code = trim($data['qrcode']); // Pastikan tidak ada spasi berlebih
 
     // Gunakan prepared statement untuk menghindari SQL Injection
-    $stmt = $conn->prepare("SELECT name, price, uniqcode AS qrcode FROM products WHERE uniqcode = ?");
+    $stmt = $conn->prepare("SELECT name, price, id FROM products WHERE uniqcode = ?");
     $stmt->bind_param("s", $code);
     $stmt->execute();
     $result = $stmt->get_result();
