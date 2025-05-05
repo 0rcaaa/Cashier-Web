@@ -4,12 +4,6 @@ require '../../../service/utility.php';
 require '../../../service/connection.php';
 
 
-ini_set('display_errors', '1');
-ini_set('display_startup_errors', '1');
-error_reporting(E_ALL);
-
-
-
 if (!isset($_SESSION['loggedIn'])) {
   header('location: ../auth/index.php');
   exit();
@@ -29,29 +23,25 @@ FROM orders o
 JOIN order_details od ON o.id = od.order_fid
 JOIN products p ON od.product_fid = p.id
 LEFT JOIN members m ON o.member_id = m.id
-WHERE o.id = ?
-  ");
+WHERE o.id = ?;");
   $stmt->bind_param("s", $order_id);
   $stmt->execute();
   $result = $stmt->get_result();
   $cart = [];
 
   while ($row = $result->fetch_assoc()) {
-    var_dump($row);
     $cart[] = [
       'name' => $row['product_name'],
       'qrcode' => $row['qrcode'],
-      'price' => (float)$row['price'],
-      'qty' => (float)$row['qty']
+      'price' => (int)$row['price'],
+      'qty' => (int)$row['qty']
     ];
   }
-
-  var_dump($cart);
 
   return $cart;
 }
 
-if (isset($_GET['order_id'])) {
+if(isset($_GET['order_id'])){
   $order_id = $_GET['order_id'];
   $cart = get_cart($order_id, $conn);
 } else {
@@ -138,7 +128,7 @@ function format_rupiah($angka)
     </div>
   </div>
 
-  <!-- <script>
+  <script>
     const cashInput = document.querySelector('input[name="cash"]');
     const exchangeDisplay = document.getElementById('exchange');
 
@@ -166,23 +156,22 @@ function format_rupiah($angka)
         alert('Cash amount is less than the total amount.');
         return false;
       } else{
-        const 
-
         fetch('<?= base_url() ?>/service/transaction.php', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            cart: <?= json_encode($cart) ?>,
-            cash: cashValue
+            action: 'transcation',
+            cart: <?= $_GET['order_id'] ?>,
+            method: 'cash'
           })
         })
       }
 
       return true;
     }
-  </script> -->
+  </script>
 </body>
 
 </html>
