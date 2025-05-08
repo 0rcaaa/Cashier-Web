@@ -159,9 +159,6 @@ if (isset($_SESSION['loggedIn']) == False) {
   <script src="<?= base_url() ?>/node_modules/html5-qrcode/html5-qrcode.min.js"></script>
   <script src="<?= base_url() ?>/node_modules/flowbite/dist/flowbite.min.js"></script>
   <script>
-
-    
-
     //update value
     function onScanSuccess(decodedText, decodedResult) {
       console.log(decodedText);
@@ -325,10 +322,10 @@ if (isset($_SESSION['loggedIn']) == False) {
       }
 
       console.log(JSON.stringify({
-            action: 'order',
-            cartData: cartItems,
-            memberPhone: memberPhone
-          }));
+        action: 'order',
+        cartData: cartItems,
+        memberPhone: memberPhone
+      }));
       document.getElementById('cartDataInput').value = JSON.stringify(cartItems);
       fetch("<?= base_url() ?>/service/auth.php", {
           method: 'POST',
@@ -344,12 +341,11 @@ if (isset($_SESSION['loggedIn']) == False) {
         .then(response => response.json())
         .then(data => {
           if (data.success) {
-            console.log(data.message);
-            return;
+            // Redirect ke halaman sukses bawa order_id sebagai parameter
+            window.location.href = 'confirm_transaction.php?order_id=' + data.order_id;
           } else {
-            console.error(data.error);
-            alert('Terjadi kesalahan saat memproses transaksi.');
-          }
+            alert(data.error || 'Terjadi kesalahan');
+          } 
         })
         .catch(error => console.error('Error:', error));
 

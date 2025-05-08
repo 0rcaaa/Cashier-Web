@@ -65,7 +65,7 @@ function order($conn){
         exit;
     }
 
-    if(!$data['memberPhone']){
+    if($data['memberPhone'] != ''){
         $stmt = $conn->prepare("SELECT id FROM members WHERE phone = ? LIMIT 1");
         $stmt->bind_param('s', $data['memberPhone']);
         $stmt->execute();
@@ -90,8 +90,7 @@ function order($conn){
             }
         }
         $stmtDetail->close();
-        header('location: ../src/pages/dashboard/confirm_transaction.php?order_id='.$order_id);
-        exit;
+        echo json_encode(['success' => 'Pesanan berhasil dibuat', 'order_id' => $order_id]);
     } else{
         http_response_code(500);
         echo json_encode(['error' => 'Gagal membuat pesanan']);
