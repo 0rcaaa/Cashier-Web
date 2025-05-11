@@ -33,13 +33,108 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         case 'transaction':
             transaction($conn);
             break;
+        case 'new_acc':
+            new_account($conn);
+            break;
         default:
             header('location: ../src/pages/auth/index.php');
             exit;
     }
 }
 
-function transaction($conn) {
+function new_account($conn)
+{
+    // Pastikan semua data POST ada
+    if (!isset($_POST['username'], $_POST['email'], $_POST['password'], $_POST['cpassword'], $_POST['role'])) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Data tidak lengkap']);
+        exit;
+    }
+
+    $username = $_POST['username'];
+    $email = $_POST['email'];
+    $password_input = $_POST['password'];
+    $cpassword = $_POST['cpassword'];
+    $role = $_POST['role'];
+
+    // Direktori target upload
+    $targetDIR = __DIR__ . '/../src/assets/images/profiles/';
+    if (!file_exists($targetDIR)) {
+        if (!mkdir($targetDIR, 0755, true)) {
+            echo json_encode(['error' => 'Failed to create target directory']);
+            exit;
+        }
+    }
+
+    // Validasi file upload
+    $allowed = ['png', 'jpg', 'jpeg'];
+    $maxsize = 4194304; // 4 MB
+
+    if (!isset($_FILES['image'])) {
+        echo json_encode(['error' => 'No image uploaded']);
+        exit;
+    }
+
+    $file_name = $_FILES['image']['name'];
+    $file_size = $_FILES['image']['size'];
+    $file_tmp = $_FILES['image']['tmp_name'];
+    $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+
+    if (!in_array($file_ext, $allowed)) {
+        echo json_encode(['error' => 'File type is not allowed. Please upload a png, jpg, or jpeg file instead.' . $file_ext]);
+        exit;
+    }
+
+    if ($file_size > $maxsize) {
+        echo json_encode(['error' => 'File is too large. File size should not exceed 4MB.']);
+        exit;
+    }
+
+    // Generate nama file unik
+    $new_name = time() . '_' . uniqid() . '.' . $file_ext;
+    $uploadDIR = $targetDIR . $new_name;
+
+    if (!is_writable($targetDIR)) {
+        echo json_encode(['error' => 'Target directory is not writable.']);
+        exit;
+    }
+
+    if (!move_uploaded_file($file_tmp, $uploadDIR)) {
+        echo json_encode(['error' => 'Error while uploading the image']);
+        exit;
+    }
+
+    $img = 'src/assets/images/profiles/' . $new_name;
+
+    // Validasi password sama
+    if ($password_input !== $cpassword) {
+        echo json_encode(['error' => 'Password tidak sama']);
+        exit;
+    }
+
+    // Cek email sudah ada atau belum
+    $stmt = $conn->prepare("SELECT * FROM admin WHERE email = ? LIMIT 1");
+    $stmt->bind_param('s', $email);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result->num_rows > 0) {
+        echo json_encode(['error' => 'Email sudah terdaftar']);
+        exit;
+    }
+
+    // Simpan akun baru
+    $password_hashed = password_hash($password_input, PASSWORD_DEFAULT);
+    $stmt = $conn->prepare("INSERT INTO admin (username, email, password, image, role) VALUES (?, ?, ?, ?, ?)");
+    $stmt->bind_param('sssss', $username, $email, $password_hashed, $img, $role);
+    if ($stmt->execute()) {
+        echo json_encode(['success' => 'Akun berhasil dibuat']);
+    } else {
+        echo json_encode(['error' => 'Gagal membuat akun']);
+    }
+}
+
+function transaction($conn)
+{
     $data = json_decode(file_get_contents("php://input"));
 
     if (!$data || !isset($data->order_id) || !isset($data->cash)) {
@@ -52,7 +147,7 @@ function transaction($conn) {
     $cash = (float)$data->cash;
 
     // Generate transaction code
-    $code =  date('Ymd') . '-' . str_pad(rand(0,9999), 4, '0', STR_PAD_LEFT);
+    $code =  date('Ymd') . '-' . str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
 
     // Hitung subtotal untuk kembalian (exchange)
     $stmtSubtotal = $conn->prepare("
@@ -106,7 +201,6 @@ function transaction($conn) {
             'success' => 'Transaksi berhasil',
             'transaction_id' => $transaction_id,
         ]);
-
     } catch (Exception $e) {
         $conn->rollback();
         http_response_code(500);
@@ -115,11 +209,12 @@ function transaction($conn) {
 }
 
 
-function order($conn){
+function order($conn)
+{
     $json = file_get_contents("php://input");
     $data = json_decode($json, true);
 
-    if(!$data || !isset($data['cartData']) || count($data['cartData']) == 0){
+    if (!$data || !isset($data['cartData']) || count($data['cartData']) == 0) {
         http_response_code(400);
         echo json_encode(['error' => 'Data tidak ditemukan']);
         exit;
@@ -127,7 +222,7 @@ function order($conn){
 
     $total_price = 0;
     $total_items = 0;
-    foreach($data['cartData'] as $item){
+    foreach ($data['cartData'] as $item) {
         $total_price += $item['total'];
         $total_items += $item['qty'];
     }
@@ -136,33 +231,33 @@ function order($conn){
     $stmt->bind_param('s', $_SESSION['email']);
     $stmt->execute();
     $result = $stmt->get_result();
-    if($result->num_rows > 0){
+    if ($result->num_rows > 0) {
         $user_id = $result->fetch_assoc()['id'];
-    } else{
+    } else {
         http_response_code(400);
         echo json_encode(['error' => 'User tidak ditemukan']);
         exit;
     }
 
-    if($data['memberPhone'] != ''){
+    if ($data['memberPhone'] != '') {
         $stmt = $conn->prepare("SELECT id FROM members WHERE phone = ? LIMIT 1");
         $stmt->bind_param('s', $data['memberPhone']);
         $stmt->execute();
         $result = $stmt->get_result();
         $member_id = $result->fetch_assoc()['id'];
-    } else{
+    } else {
         $member_id = 0;
     }
 
     $stmt = $conn->prepare("INSERT INTO orders (user_id, member_id, total_items, total_price) VALUES (?,?,?,?)");
     $stmt->bind_param('iiid', $user_id, $member_id, $total_items, $total_price);
 
-    if($stmt->execute()){
+    if ($stmt->execute()) {
         $order_id = $stmt->insert_id;
         $stmtDetail = $conn->prepare("INSERT INTO order_details (order_fid, product_fid, qty, total_price) VALUES (?,?,?,?)");
-        foreach($data['cartData'] as $item){
+        foreach ($data['cartData'] as $item) {
             $stmtDetail->bind_param('iiid', $order_id, $item['id'], $item['qty'], $item['price']);
-            if(!$stmtDetail->execute()){
+            if (!$stmtDetail->execute()) {
                 http_response_code(500);
                 echo json_encode(['error' => 'Gagal menyimpan item pesanan']);
                 exit;
@@ -170,13 +265,14 @@ function order($conn){
         }
         $stmtDetail->close();
         echo json_encode(['success' => 'Pesanan berhasil dibuat', 'order_id' => $order_id]);
-    } else{
+    } else {
         http_response_code(500);
         echo json_encode(['error' => 'Gagal membuat pesanan']);
     }
 }
 
-function verify($conn){
+function verify($conn)
+{
     session_start();
     $email = $_POST['email'];
 
@@ -184,7 +280,7 @@ function verify($conn){
     $stmt->bind_param('s', $email);
     $result = $stmt->execute();
     $result = $stmt->get_result();
-    if($result->num_rows > 0){
+    if ($result->num_rows > 0) {
         $idAcc = $result->fetch_assoc()['id'];
         $characters = '0123456789';
         $length = 4; // Panjang kode yang diinginkan
@@ -196,14 +292,14 @@ function verify($conn){
 
         $stmt = $conn->prepare("INSERT INTO verify_tokens (fid_acc, token, exp_at) VALUES (?, ?, NOW() + INTERVAL 1 HOUR)");
         $stmt->bind_param('is', $idAcc, $token);
-        if($stmt->execute()){
-            header('location: sendToken.php?email='.$email.'&token='.$token);
+        if ($stmt->execute()) {
+            header('location: sendToken.php?email=' . $email . '&token=' . $token);
             exit();
-        } else{
+        } else {
             echo "Gagal mengirim token verifikasi";
             exit();
         }
-    } else{
+    } else {
         echo 'email g ada';
     }
 }
@@ -376,9 +472,9 @@ function add_product($conn)
     $fid_category = $_POST['kategori'];
     $description = $_POST['Detail'];
     $img = 'src/assets/images/product/' . $new_name;
-    if($_POST['uniqcode'] == ''){
+    if ($_POST['uniqcode'] == '') {
         $uniqcode = generate_varchar();
-    } else{
+    } else {
         $uniqcode = $_POST['uniqcode'];
     }
     $uniqcode = generate_varchar();
