@@ -36,6 +36,9 @@ switch ($action) {
     case 'get_inv':
         getInv($conn);
         break;
+    case 'get_orders':
+        getOrders($conn);
+        break;
 
     default:
         echo json_encode(['error' => 'Invalid request']);
@@ -43,6 +46,72 @@ switch ($action) {
 }
 
 // ====================== FUNCTION FETCH DATA ======================
+
+function getOrders($conn)
+{
+    $where = [];
+    $params = [];
+    $types = '';
+
+    // Filter member
+    if (!empty($_GET['member'])) {
+        if ($_GET['member'] == 'registered') {
+            $where[] = 'o.member_id IS NOT NULL';
+        } elseif ($_GET['member'] == 'unregistered') {
+            $where[] = 'o.member_id IS NULL';
+        }
+    }
+
+    // Filter status
+    if (!empty($_GET['status'])) {
+        $where[] = 'o.status = ?';
+        $params[] = $_GET['status'];
+        $types .= 's';
+    }
+
+    // Filter date (YYYY-MM-DD)
+    if (!empty($_GET['date'])) {
+        $where[] = "DATE(o.created_at) = ?";
+        $params[] = $_GET['date'];
+        $types .= 's';
+    }
+
+
+    // Search by order number
+    if (!empty($_GET['search'])) {
+        $where[] = 'o.id LIKE ?';
+        $params[] = '%' . $_GET['search'] . '%';
+        $types .= 's';
+    }
+
+    $sql = "SELECT o.id AS order_number, o.total_items AS qty, o.total_price, m.name AS member_name, o.created_at AS date, o.status
+            FROM orders o
+            LEFT JOIN members m ON o.member_id = m.id";
+
+    if (!empty($where)) {
+        $sql .= " WHERE " . implode(' AND ', $where);
+    }
+
+    $sql .= " ORDER BY o.created_at DESC";
+
+    // Pagination
+    $page = isset($_GET['page']) ? max((int)$_GET['page'], 1) : 1;
+    $limit = 7;
+    $offset = ($page - 1) * $limit;
+    $sql .= " LIMIT $limit OFFSET $offset";
+
+    $stmt = $conn->prepare($sql);
+    if ($params) {
+        $stmt->bind_param($types, ...$params);
+    }
+
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $orders = $result->fetch_all(MYSQLI_ASSOC);
+    echo json_encode($orders);
+}
+
+
 
 function getInv($conn)
 {

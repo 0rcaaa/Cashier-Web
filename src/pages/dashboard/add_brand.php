@@ -23,13 +23,13 @@ if(isset($_SESSION['success'])) {
   <meta charset="UTF-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Add Product</title>
+  <title>Add Brand</title>
   <link href="../../assets/images/logo/logo_white.png" rel="icon">
   <link href="../../css/output.css" rel="stylesheet">
 </head>
 
 <body
-  x-data="{ page: 'add_category', 'loaded': true, 'darkMode': true, 'stickyMenu': false, 'sidebarToggle': false, 'scrollTop': false }"
+  x-data="{ page: 'add_brand', 'loaded': true, 'darkMode': true, 'stickyMenu': false, 'sidebarToggle': false, 'scrollTop': false }"
   x-init="
           darkMode = JSON.parse(localStorage.getItem('darkMode'));
           $watch('darkMode', value => localStorage.setItem('darkMode', JSON.stringify(value)))"
@@ -59,7 +59,7 @@ if(isset($_SESSION['success'])) {
             <div
               class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <h2 class="text-title-md2 font-bold text-black dark:text-white">
-                Add New Category
+                Add New Brand
               </h2>
 
               <nav>
@@ -67,7 +67,7 @@ if(isset($_SESSION['success'])) {
                   <li>
                     <a class="font-medium hover:text-meta-5" href="index.php">Dashboard /</a>
                   </li>
-                  <li class="font-medium text-primary">Add New Category</li>
+                  <li class="font-medium text-primary">Add New Brand</li>
                 </ol>
               </nav>
             </div>
@@ -81,7 +81,7 @@ if(isset($_SESSION['success'])) {
                   <div
                     class="border-b border-stroke px-7 py-4 dark:border-strokedark">
                     <h3 class="font-medium text-black dark:text-white">
-                      Category Information
+                      Brand Information
                     </h3>
                   </div>
                   <div class="p-7">
@@ -89,12 +89,12 @@ if(isset($_SESSION['success'])) {
                     <div class="mb-5.5">
                       <label
                         class="mb-3 block text-sm font-medium text-black dark:text-white"
-                        for="categoryName">Name of Category</label>
+                        for="brandName">Name of Brand</label>
                       <input
                         class=" w-full rounded border border-stroke bg-gray px-4.5 py-3 font-medium text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
-                        name="categoryName"
-                        id="categoryName"
-                        type="text" />
+                        name="brandName"
+                        id="brandName"
+                        type="text"/>
                     </div>
 
                     <div class="flex justify-end gap-4.5 mt-6">
@@ -105,7 +105,7 @@ if(isset($_SESSION['success'])) {
                       </button>
                       <button
                         class="flex justify-center rounded bg-primary px-6 py-2 font-medium text-gray hover:bg-opacity-90"
-                        type="submit" value="addCategory" name="action">
+                        type="submit" value="addBrand" name="action">
                         Save
                       </button>
                     </div>

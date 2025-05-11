@@ -5,7 +5,9 @@
 >
   <!-- SIDEBAR HEADER -->
   <div class="flex items-center justify-between gap-2 px-6 py-5.5 lg:py-6.5">
-    <a class="text-bodydark2" href="index.php"> Cashier </a>
+    <a class="w-full" href="index.php">
+      <img class="w-2/3 mx-auto" src="<?=base_url()?>/src/assets/images/logo/logo.png" alt="">
+    </a>
 
     <button
       class="block lg:hidden text-bodydark2"
@@ -33,7 +35,7 @@
   >
     <!-- Sidebar Menu -->
     <nav
-      class="mt-5 px-4 py-4 lg:mt-9 lg:px-6"
+      class="px-4 lg:px-6"
       x-data="{selected: $persist('Dashboard')}"
     >
       <!-- Menu Group -->
@@ -206,12 +208,23 @@
                 <li>
                   <a
                     class="group relative flex items-center gap-2.5 rounded-md px-4 font-medium text-bodydark2 duration-300 ease-in-out hover:text-white"
-                    href="add_product.php"
-                    :class="page === 'add_product' && '!text-white'"
+                    href="add_account.php"
+                    :class="page === 'add_account' && '!text-white'"
                   >
-                    Product
+                    Account
                   </a>
                 </li>
+                
+                <li>
+                  <a
+                    class="group relative flex items-center gap-2.5 rounded-md px-4 font-medium text-bodydark2 duration-300 ease-in-out hover:text-white"
+                    href="add_brand.php"
+                    :class="page === 'add_brand' && '!text-white'"
+                  >
+                    Brand
+                  </a>
+                </li>
+                
                 <li>
                   <a
                     class="group relative flex items-center gap-2.5 rounded-md px-4 font-medium text-bodydark2 duration-300 ease-in-out hover:text-white"
@@ -224,12 +237,13 @@
                 <li>
                   <a
                     class="group relative flex items-center gap-2.5 rounded-md px-4 font-medium text-bodydark2 duration-300 ease-in-out hover:text-white"
-                    href="add_account.php"
-                    :class="page === 'add_account' && '!text-white'"
+                    href="add_product.php"
+                    :class="page === 'add_product' && '!text-white'"
                   >
-                    Account
+                    Product
                   </a>
                 </li>
+                
               </ul>
             </div>
             <!-- Dropdown Menu End -->

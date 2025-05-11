@@ -33,12 +33,63 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         case 'transaction':
             transaction($conn);
             break;
+        case 'addCategory':
+            add_category($conn);
+            break;
+        case 'addBrand':
+            add_brand($conn);
+            break;
         case 'new_acc':
             new_account($conn);
             break;
         default:
             header('location: ../src/pages/auth/index.php');
             exit;
+    }
+}
+
+
+function add_category($conn){
+    $stmt = $conn->prepare("SELECT * FROM categories WHERE name = ? LIMIT 1");
+    $stmt->bind_param('s', $_POST['categoryName']);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result->num_rows > 0) {
+        $_SESSION['err'] = 'Kategori sudah ada';
+        header('location: ../src/pages/dashboard/add_category.php');
+        exit;
+    }else{
+        $stmt = $conn->prepare("INSERT INTO categories (name) VALUES (?)");
+        $stmt->bind_param("s", $_POST['categoryName']);
+        if ($stmt->execute()) {
+            $_SESSION['success'] = 'Kategori berhasil ditambahkan';
+            header('location: ../src/pages/dashboard/add_category.php');
+        } else {
+            $_SESSION['err'] = 'Kategori gagal ditambahkan';
+            header('location: ../src/pages/dashboard/add_category.php');
+        }
+    }
+}
+
+function add_brand($conn){
+    $stmt = $conn->prepare("SELECT * FROM brands WHERE name = ? LIMIT 1");
+    $stmt->bind_param('s', $_POST['brandName']);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result->num_rows > 0) {
+        $_SESSION['err'] = 'Brand sudah ada';
+        header('location: ../src/pages/dashboard/add_brand.php');
+        exit;
+    }else{
+        $stmt = $conn->prepare("INSERT INTO brands (name) VALUES (?)");
+        $stmt->bind_param("s", $_POST['brandName']);
+        if ($stmt->execute()) {
+            $_SESSION['success'] = 'brand berhasil ditambahkan';
+            header('location: ../src/pages/dashboard/add_brand.php');
+        } else {
+            $_SESSION['err'] = 'brand gagal ditambahkan';
+            header('location: ../src/pages/dashboard/add_brand.php');
+        }
     }
 }
 
@@ -249,7 +300,7 @@ function order($conn)
         $member_id = 0;
     }
 
-    $stmt = $conn->prepare("INSERT INTO orders (user_id, member_id, total_items, total_price) VALUES (?,?,?,?)");
+    $stmt = $conn->prepare("INSERT INTO orders (user_id, member_id, total_items, total_price, status) VALUES (?,?,?,?,'pending')");
     $stmt->bind_param('iiid', $user_id, $member_id, $total_items, $total_price);
 
     if ($stmt->execute()) {
