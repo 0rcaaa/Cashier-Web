@@ -174,12 +174,12 @@ p.name AS product_name,
 c.name AS category_name,
 p.price AS product_price,
 b.name AS brand,
-COALESCE(SUM(td.quantity), 0) AS total_sold,
-(COALESCE(SUM(td.quantity), 0) * p.price) AS profit
+COALESCE(SUM(od.qty), 0) AS total_sold,
+(COALESCE(SUM(od.qty), 0) * p.price) AS profit
 FROM products p
 JOIN categories c ON p.category_id = c.id
 JOIN brands b ON p.brand_id = b.id
-LEFT JOIN transaction_details td ON p.id = td.product_id
+LEFT JOIN order_details od ON p.id = od.product_fid
 GROUP BY  p.id, p.name, c.name, p.price, b.name
 ORDER BY profit DESC 
 LIMIT 5");
