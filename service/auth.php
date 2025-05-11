@@ -30,11 +30,90 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         case 'order':
             order($conn);
             break;
+        case 'transaction':
+            transaction($conn);
+            break;
         default:
             header('location: ../src/pages/auth/index.php');
             exit;
     }
 }
+
+function transaction($conn) {
+    $data = json_decode(file_get_contents("php://input"));
+
+    if (!$data || !isset($data->order_id) || !isset($data->cash)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Data tidak lengkap']);
+        exit;
+    }
+
+    $order_id = (int)$data->order_id;
+    $cash = (float)$data->cash;
+
+    // Generate transaction code
+    $code =  date('Ymd') . '-' . str_pad(rand(0,9999), 4, '0', STR_PAD_LEFT);
+
+    // Hitung subtotal untuk kembalian (exchange)
+    $stmtSubtotal = $conn->prepare("
+        SELECT SUM(p.price * od.qty) AS subtotal
+        FROM order_details od
+        JOIN products p ON od.product_fid = p.id
+        WHERE od.order_fid = ?
+    ");
+    $stmtSubtotal->bind_param('i', $order_id);
+    $stmtSubtotal->execute();
+    $resultSubtotal = $stmtSubtotal->get_result()->fetch_assoc();
+    $subtotal = (float)$resultSubtotal['subtotal'];
+
+    $exchange = $cash - $subtotal;
+    if ($exchange < 0) $exchange = 0;
+
+    // Mulai transaksi DB
+    $conn->begin_transaction();
+
+    try {
+        // Insert transaction
+        $stmt = $conn->prepare("
+            INSERT INTO transactions (order_fid, transaction_code, cash, exchange)
+            VALUES (?, ?, ?, ?)
+        ");
+        $stmt->bind_param('issd', $order_id, $code, $cash, $exchange);
+        $stmt->execute();
+        $transaction_id = $stmt->insert_id;
+
+        // Update order status
+        $stmtOrder = $conn->prepare("
+            UPDATE orders SET status = 'paid' WHERE id = ?
+        ");
+        $stmtOrder->bind_param('i', $order_id);
+        $stmtOrder->execute();
+
+        // Update stock produk (chain query)
+        $stmtStock = $conn->prepare("
+            UPDATE products p
+            JOIN order_details od ON p.id = od.product_fid
+            SET p.stock = p.stock - od.qty
+            WHERE od.order_fid = ?
+        ");
+        $stmtStock->bind_param('i', $order_id);
+        $stmtStock->execute();
+
+        // Commit transaksi
+        $conn->commit();
+
+        echo json_encode([
+            'success' => 'Transaksi berhasil',
+            'transaction_id' => $transaction_id,
+        ]);
+
+    } catch (Exception $e) {
+        $conn->rollback();
+        http_response_code(500);
+        echo json_encode(['error' => 'Gagal memproses transaksi', 'message' => $e->getMessage()]);
+    }
+}
+
 
 function order($conn){
     $json = file_get_contents("php://input");
@@ -297,13 +376,18 @@ function add_product($conn)
     $fid_category = $_POST['kategori'];
     $description = $_POST['Detail'];
     $img = 'src/assets/images/product/' . $new_name;
+    if($_POST['uniqcode'] == ''){
+        $uniqcode = generate_varchar();
+    } else{
+        $uniqcode = $_POST['uniqcode'];
+    }
     $uniqcode = generate_varchar();
 
     // Check if all required fields are set
     $stmt = $conn->prepare("INSERT INTO products
-            (name, price, margin, stock, category_id, description, image, brand_id, production_date, expiration_date, created_at, uniqcode) 
-            VALUES (?,?,?,?,?,?,?,?,?,?,NOW(),?)");
-    $stmt->bind_param("sddiississs", $name, $price, $margin, $stock, $fid_category, $description, $img, $brand, $production, $exp, $uniqcode);
+            (name, price, stock, category_id, description, image, brand_id, production_date, expiration_date, created_at, uniqcode) 
+            VALUES (?,?,?,?,?,?,?,?,?,NOW(),?)");
+    $stmt->bind_param("sdiississs", $name, $price,  $stock, $fid_category, $description, $img, $brand, $production, $exp, $uniqcode);
     // $query = "INSERT INTO products (name, price, margin, stock, category_id, description, image, brand_id, production_date, expiration_date, created_at) VALUES ($name, $price, $margin, $stock, $fid_category, $description, $img, $brand, $production, $exp, NOW())";
     // echo $query;
 

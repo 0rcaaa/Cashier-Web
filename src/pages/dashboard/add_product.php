@@ -116,11 +116,11 @@ if (isset($_SESSION['loggedIn']) == False) {
                       <div class="w-full sm:w-1/2">
                         <label
                           class="mb-3 block text-sm font-medium text-black dark:text-white"
-                          for="price">Starting Price</label>
+                          for="price">Product Price</label>
                         <input
                           class=" w-full rounded border border-stroke bg-gray px-4.5 py-3 font-medium text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
                           type="text"
-                          placeholder="Sebelum margin"
+                          placeholder="Masukkan harga"
                           name="price"
                           id="price" />
                       </div>
@@ -128,14 +128,14 @@ if (isset($_SESSION['loggedIn']) == False) {
                       <div class="w-full sm:w-1/2">
                         <label
                           class="mb-3 block text-sm font-medium text-black dark:text-white"
-                          for="margin">Margin</label>
+                          for="uniqcode">Uniqcode</label>
                         <input
                           class="[&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none 
                               [&::-moz-appearance:textfield] w-full rounded border border-stroke bg-gray px-4.5 py-3 font-medium text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
-                          type="number"
-                          name="margin"
-                          placeholder="Max 100"
-                          id="margin" />
+                          type="text"
+                          name="uniqcode"
+                          placeholder="Max 30"
+                          id="uniqcode" />
                       </div>
                     </div>
 
@@ -326,7 +326,6 @@ if (isset($_SESSION['loggedIn']) == False) {
     document.addEventListener("DOMContentLoaded", function() {
       populateCategoryDropdown();
       setupImageUpload();
-      setupMarginInput();
       populateBrandDropdown();
     });
 
@@ -423,26 +422,6 @@ if (isset($_SESSION['loggedIn']) == False) {
       });
     }
 
-    function setupMarginInput() {
-      const marginInput = document.getElementById("margin");
-
-      marginInput.addEventListener("input", function() {
-        // Hapus karakter selain angka
-        this.value = this.value.replace(/\D/g, "");
-
-        // Batasi hanya 3 digit
-        if (this.value.length > 3) {
-          this.value = this.value.slice(0, 3);
-        }
-        if (this.value > 100) {
-          this.value = 100;
-        }
-
-        if (this.value <= 0) {
-          this.value = 0;
-        }
-      });
-    }
   </script>
   <script defer src="../../js/bundle.js"></script>
 
