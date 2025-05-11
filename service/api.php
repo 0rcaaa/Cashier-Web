@@ -150,16 +150,16 @@ function dashboardData($conn)
 
     // Ambil data total transaksi hari ini
     $stmt = $conn->prepare("SELECT
-DATE(NOW()) AS tanggal,
-COUNT(DISTINCT t.id) AS total_transaksi_today,
-COALESCE(SUM(td.quantity * (p.price + (p.price * p.margin / 100))), 0) AS total_penjualan,
-COALESCE(SUM(td.quantity * p.price), 0) AS total_modal,
-COALESCE(SUM(td.quantity * ((p.price * p.margin) / 100)), 0) AS total_keuntungan
-FROM kasir.transactions t
-LEFT JOIN kasir.transaction_details td ON t.id = td.transaction_id
-LEFT JOIN kasir.products p ON td.product_id = p.id
-WHERE DATE(t.created_at) = CURDATE()
-");
+                    DATE(NOW()) AS tanggal,
+                    COUNT(DISTINCT t.id) AS total_transaksi_today,
+                    COALESCE(SUM(td.quantity * (p.price + (p.price * p.margin / 100))), 0) AS total_penjualan,
+                    COALESCE(SUM(td.quantity * p.price), 0) AS total_modal,
+                    COALESCE(SUM(td.quantity * ((p.price * p.margin) / 100)), 0) AS total_keuntungan
+                    FROM kasir.transactions t
+                    LEFT JOIN kasir.transaction_details td ON t.id = td.transaction_id
+                    LEFT JOIN kasir.products p ON td.product_id = p.id
+                    WHERE DATE(t.created_at) = CURDATE()
+                    ");
     $stmt->execute();
     $result = $stmt->get_result();
     $row = $result->fetch_assoc();
@@ -236,22 +236,81 @@ WHERE DATE(t.created_at) = CURDATE() - INTERVAL 1 DAY
 
 function getProducts($conn)
 {
-    $stmt = $conn->prepare("SELECT 
-p.id AS product_id,
-p.image AS img,
-p.name AS product_name,
-c.name AS category_name,
-p.price AS product_price,
-b.name AS brand,
-COALESCE(SUM(od.qty), 0) AS total_sold,
-(COALESCE(SUM(od.qty), 0) * p.price) AS profit
-FROM products p
-JOIN categories c ON p.category_id = c.id
-JOIN brands b ON p.brand_id = b.id
-LEFT JOIN order_details od ON p.id = od.product_fid
-GROUP BY  p.id, p.name, c.name, p.price, b.name
-ORDER BY profit DESC 
-LIMIT 5");
+    $search = isset($_GET['search']) ? '%' . $conn->real_escape_string($_GET['search']) . '%' : null;
+    $brand = isset($_GET['brand']) ? $conn->real_escape_string($_GET['brand']) : null;
+    $category = isset($_GET['category']) ? $conn->real_escape_string($_GET['category']) : null;
+    $min_price = isset($_GET['min_price']) ? (int)$_GET['min_price'] : null;
+    $max_price = isset($_GET['max_price']) ? (int)$_GET['max_price'] : null;
+
+    $query = "SELECT 
+                p.id AS product_id,
+                p.image AS img,
+                p.name AS product_name,
+                c.name AS category_name,
+                p.price AS product_price,
+                b.name AS brand,
+                COALESCE(SUM(od.qty), 0) AS total_sold,
+                (COALESCE(SUM(od.qty), 0) * p.price) AS profit
+            FROM products p
+            JOIN categories c ON p.category_id = c.id
+            JOIN brands b ON p.brand_id = b.id
+            LEFT JOIN order_details od ON p.id = od.product_fid
+            WHERE 1 ";
+
+    // Dynamic filter
+    if ($search) {
+        $query .= " AND (p.name LIKE ? OR c.name LIKE ? OR b.name LIKE ?) ";
+    }
+    if ($brand) {
+        $query .= " AND b.name = ? ";
+    }
+    if ($category) {
+        $query .= " AND c.name = ? ";
+    }
+    if ($min_price !== null) {
+        $query .= " AND p.price >= ? ";
+    }
+    if ($max_price !== null) {
+        $query .= " AND p.price <= ? ";
+    }
+
+    $query .= " GROUP BY p.id, p.name, c.name, p.price, b.name
+                ORDER BY profit DESC
+                LIMIT 100";
+
+    $stmt = $conn->prepare($query);
+
+    // Bind parameter dinamis
+    $types = '';
+    $params = [];
+
+    if ($search) {
+        $types .= 'sss';
+        $params[] = $search;
+        $params[] = $search;
+        $params[] = $search;
+    }
+    if ($brand) {
+        $types .= 's';
+        $params[] = $brand;
+    }
+    if ($category) {
+        $types .= 's';
+        $params[] = $category;
+    }
+    if ($min_price !== null) {
+        $types .= 'i';
+        $params[] = $min_price;
+    }
+    if ($max_price !== null) {
+        $types .= 'i';
+        $params[] = $max_price;
+    }
+
+    if (!empty($params)) {
+        $stmt->bind_param($types, ...$params);
+    }
+
     $stmt->execute();
     $result = $stmt->get_result();
     $products = $result->fetch_all(MYSQLI_ASSOC);
@@ -260,12 +319,13 @@ LIMIT 5");
     exit();
 }
 
+
 function getCategory($conn)
 {
     $stmt = $conn->prepare("SELECT c.id AS id, c.name AS name, COUNT(p.id) AS relate_c
                             FROM categories c
                             LEFT JOIN products p ON c.id = p.id
-                            GROUP BY c.id, c.name");
+                            GROUP BY c.id, c.name ORDER BY c.id ASC");
     $stmt->execute();
     $result = $stmt->get_result();
     $categories = $result->fetch_all(MYSQLI_ASSOC);
@@ -279,7 +339,7 @@ function getBrands($conn)
     $stmt = $conn->prepare("SELECT b.id AS id, b.name AS name, COUNT(p.id) AS relate_b
                             FROM brands b
                             LEFT JOIN products p ON b.id = p.id
-                            GROUP BY b.id, b.name");
+                            GROUP BY b.id, b.name ORDER BY b.id ASC");
     $stmt->execute();
     $result = $stmt->get_result();
     $brands = $result->fetch_all(MYSQLI_ASSOC);

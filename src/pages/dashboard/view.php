@@ -3,7 +3,7 @@ session_start();
 require '../../../service/utility.php';
 require '../../../service/connection.php';
 
-if (isset($_SESSION['loggedIn']) == False) {
+if (!isset($_SESSION['loggedIn'])) {
   header('location: ../auth/index.php');
   exit();
 }
@@ -74,7 +74,7 @@ if (isset($_SESSION['loggedIn']) == False) {
               class="rounded-sm border border-stroke bg-white px-5 pb-2.5 pt-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
               <div class="px-4 py-6 md:px-6 xl:px-7.5 flex items-center justify-between">
                 <h4 class="text-xl font-bold text-black dark:text-white">Products</h4>
-                <a href="details.php?view=product" class="font-medium curpointer hover:text-primary">See More</a>
+                <a href="details.php?view=Product" class="font-medium curpointer hover:text-primary">See More</a>
               </div>
               <div class="max-w-full overflow-x-auto">
 
@@ -118,10 +118,11 @@ if (isset($_SESSION['loggedIn']) == False) {
             <!-- ====== Table Three End -->
 
             <!-- ====== Table Two Start -->
-            <div class="flex flex-row justify-around gap-[1rem]">
+            <div class="flex flex-row justify-around gap-[1rem] ">
               <div class="rounded-sm border border-stroke bg-white min-w-[49%] shadow-default dark:border-strokedark dark:bg-boxdark">
-                <div class="px-4 py-6 md:px-6 xl:px-7.5">
+                <div class="px-4 py-6 md:px-6 xl:px-7.5 flex items-center justify-between">
                   <h4 class="text-xl font-bold text-black dark:text-white">Categories</h4>
+                  <a href="details.php?view=Category" class="font-medium curpointer hover:text-primary">See More</a>
                 </div>
                 <div class="grid grid-cols-6 border-t border-stroke justify-items-center px-4 py-4.5 dark:border-strokedark  md:px-6 2xl:px-7.5">
                   <div class="col-span-1 flex items-center">
@@ -143,8 +144,9 @@ if (isset($_SESSION['loggedIn']) == False) {
               </div>
 
               <div class="rounded-sm border border-stroke bg-white min-w-[49%] shadow-default dark:border-strokedark dark:bg-boxdark">
-                <div class="px-4 py-6 md:px-6 xl:px-7.5">
+                <div class="px-4 py-6 md:px-6 xl:px-7.5 flex items-center justify-between">
                   <h4 class="text-xl font-bold text-black dark:text-white">Brands</h4>
+                  <a href="details.php?view=Brand" class="font-medium curpointer hover:text-primary">See More</a>
                 </div>
                 <div
                   class="grid grid-cols-6 border-t border-stroke justify-items-center px-4 py-4.5 dark:border-strokedark  md:px-6 2xl:px-7.5">
@@ -212,7 +214,7 @@ if (isset($_SESSION['loggedIn']) == False) {
           </td>
           <td class="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
           <div class="flex justify-center items-center space-x-3.5">
-          <a href="edit.php?id=${row.product_id}&type=product" class="hover:text-primary cursor-pointer">
+          <a href="edit.php?id=${row.product_id}" class="hover:text-primary cursor-pointer">
           <svg
           class="fill-current"
                                     width="18"
@@ -228,7 +230,7 @@ if (isset($_SESSION['loggedIn']) == False) {
                                       fill="" />
                                       </svg>
                                       </a>
-                                      <a href="edit.php?id=${row.product_id}&type=product" class="hover:text-primary cursor-pointer">
+                                      <a href="delete.php?id=${row.product_id}&type=product" class="hover:text-primary cursor-pointer">
                                       <svg
                                       class="fill-current"
                                       width="18"
@@ -276,7 +278,7 @@ if (isset($_SESSION['loggedIn']) == False) {
                       <p class="text-sm font-medium text-meta-3">${row.relate_c}</p>
                     </div>
                     <div class="col-span-1 flex items-center">
-                      <a href="edit.php?id=${row.id}&type=product" class="hover:text-primary cursor-pointer">
+                      <a href="delete.php?id=${row.id}&type=category" class="hover:text-primary cursor-pointer">
                                   <svg
                                     class="fill-current"
                                     width="18"
@@ -325,7 +327,7 @@ if (isset($_SESSION['loggedIn']) == False) {
                       <p class="text-sm font-medium text-meta-3">${row.relate_b}</p>
                     </div>
                     <div class="col-span-1 flex items-center">
-                      <a href="edit.php?id=${row.id}&type=product" class="hover:text-primary cursor-pointer">
+                      <a href="delete.php?id=${row.id}&type=product" class="hover:text-primary cursor-pointer">
                                   <svg
                                     class="fill-current"
                                     width="18"
