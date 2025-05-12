@@ -56,9 +56,9 @@ function getOrders($conn)
     // Filter member
     if (!empty($_GET['member'])) {
         if ($_GET['member'] == 'registered') {
-            $where[] = 'o.member_id IS NOT NULL';
+            $where[] = 'o.member_id > 0';
         } elseif ($_GET['member'] == 'unregistered') {
-            $where[] = 'o.member_id IS NULL';
+            $where[] = 'o.member_id = 0';
         }
     }
 
@@ -67,12 +67,20 @@ function getOrders($conn)
         $where[] = 'o.status = ?';
         $params[] = $_GET['status'];
         $types .= 's';
-    }
+    }   
 
-    // Filter date (YYYY-MM-DD)
-    if (!empty($_GET['date'])) {
-        $where[] = "DATE(o.created_at) = ?";
-        $params[] = $_GET['date'];
+    if (!empty($_GET['date_from']) && !empty($_GET['date_to'])) {
+        $where[] = "DATE(o.created_at) BETWEEN ? AND ?";
+        $params[] = $_GET['date_from'];
+        $params[] = $_GET['date_to'];
+        $types .= 'ss';
+    } elseif (!empty($_GET['date_from'])) {
+        $where[] = "DATE(o.created_at) >= ?";
+        $params[] = $_GET['date_from'];
+        $types .= 's';
+    } elseif (!empty($_GET['date_to'])) {
+        $where[] = "DATE(o.created_at) <= ?";
+        $params[] = $_GET['date_to'];
         $types .= 's';
     }
 
