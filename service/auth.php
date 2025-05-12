@@ -49,7 +49,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
 
 
-function add_category($conn){
+function add_category($conn)
+{
     $stmt = $conn->prepare("SELECT * FROM categories WHERE name = ? LIMIT 1");
     $stmt->bind_param('s', $_POST['categoryName']);
     $stmt->execute();
@@ -58,7 +59,7 @@ function add_category($conn){
         $_SESSION['err'] = 'Kategori sudah ada';
         header('location: ../src/pages/dashboard/add_category.php');
         exit;
-    }else{
+    } else {
         $stmt = $conn->prepare("INSERT INTO categories (name) VALUES (?)");
         $stmt->bind_param("s", $_POST['categoryName']);
         if ($stmt->execute()) {
@@ -71,7 +72,8 @@ function add_category($conn){
     }
 }
 
-function add_brand($conn){
+function add_brand($conn)
+{
     $stmt = $conn->prepare("SELECT * FROM brands WHERE name = ? LIMIT 1");
     $stmt->bind_param('s', $_POST['brandName']);
     $stmt->execute();
@@ -80,7 +82,7 @@ function add_brand($conn){
         $_SESSION['err'] = 'Brand sudah ada';
         header('location: ../src/pages/dashboard/add_brand.php');
         exit;
-    }else{
+    } else {
         $stmt = $conn->prepare("INSERT INTO brands (name) VALUES (?)");
         $stmt->bind_param("s", $_POST['brandName']);
         if ($stmt->execute()) {
@@ -389,9 +391,6 @@ function scanProduct($conn)
 function login($conn)
 {
     session_start();
-    include("connection.php");
-
-
     if (isset($_COOKIE['auth_token'])) {
         $token = $_COOKIE['auth_token'];
         $stmt = $conn->prepare("SELECT * FROM admin WHERE token = ?");
@@ -427,6 +426,7 @@ function login($conn)
             if (password_verify($password, $row['password'])) {
                 $_SESSION['name'] = $row['username'];
                 $_SESSION['email'] = $row['email'];
+                $_SESSION['profile'] = base_url() ."/". $row['image'];
                 $_SESSION['loggedIn'] = true;
                 $_SESSION['role'] = $row['role'];
 
@@ -456,14 +456,12 @@ function login($conn)
 
 function add_product($conn)
 {
-    session_start();
-
     // Debugging: Echo all submitted data
     //turn on to debug
-    // echo '<pre>';
-    // print_r($_POST);
-    // print_r($_FILES);
-    // echo '</pre>';
+    echo '<pre>';
+    print_r($_POST);
+    print_r($_FILES);
+    echo '</pre>';
 
     $targetDIR = __DIR__ . '/../src/assets/images/product/';
     if (!file_exists($targetDIR)) {
@@ -507,7 +505,6 @@ function add_product($conn)
     // Insert the product into the database
     $name = $_POST['productName'];
     $price = $_POST['price'];
-    $margin = $_POST['margin'];
     $stock = $_POST['stock'];
     if ($_POST['production'] == '') {
         $production = NULL;
