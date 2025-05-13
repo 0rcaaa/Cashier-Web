@@ -182,6 +182,7 @@ if (isset($_SESSION['loggedIn']) == False) {
         .then(data => {
           if (data.error) {
             console.log(data);
+            alert(data.error);
             return;
           }
           addProductRow(data);

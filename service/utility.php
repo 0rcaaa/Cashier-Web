@@ -33,6 +33,7 @@ function rememberMe($conn)
         $row = $result->fetch_assoc();
         $_SESSION['name'] = $row['username'];
         $_SESSION['email'] = $row['email'];
+        $_SESSION['profile'] = base_url() ."/". $row['image'];
         $_SESSION['loggedIn'] = true;
         $_SESSION['role'] = $row['role'];
         header('location: '.base_url() .'/src/pages/dashboard/index.php');

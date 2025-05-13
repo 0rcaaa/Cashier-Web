@@ -42,9 +42,53 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         case 'new_acc':
             new_account($conn);
             break;
+        case 'addDiscount':
+            add_discount($conn);
+            break;
+        case 'newMember':
+            new_member($conn);
+            break;
         default:
             header('location: ../src/pages/auth/index.php');
             exit;
+    }
+}
+
+function new_member($conn){
+    //check apakah password dan konfirmasi password sama
+    if ($_POST['password'] == $_POST['cpass']){
+        //check apakah member sudah ada dari nomor telepon
+        $stmt = $conn->prepare("SELECT * FROM members WHERE phone = ? LIMIT 1");
+        $stmt->bind_param('s', $_POST['phone']);
+        $stmt->execute();
+        if($stmt->get_result()->num_rows > 0){
+            echo json_encode(['error'=>'Member sudah ada']);
+        }else{
+            //hash password
+            $hashed = password_hash($_POST['password'], PASSWORD_DEFAULT);
+            //insert member ke database
+            $stmt = $conn->prepare("INSERT INTO members (name, phone, password) VALUES (?,?,?)");
+            $stmt->bind_param('sss', $_POST['username'], $_POST['phone'], $hashed);
+            if($stmt->execute()){
+                echo json_encode(['success'=>'Member berhasil ditambahkan']);
+            } else{
+                echo json_encode(['error'=>'kesalahan saat menambahkan member']);
+            }
+        }
+    } else{
+        echo json_encode(['error' => 'passowrd tidak sama']);
+    }
+}
+
+function add_discount($conn){
+    $stmt = $conn->prepare("INSERT INTO discounts (title, percentage, points_required ,exp_at) VALUES (?,?,?,?)");
+    $stmt-> bind_param("siis", $_POST['title'], $_POST['percentage'], $_POST['PR'], $_POST['exp']);
+    if ($stmt->execute()) {
+        $_SESSION['success'] = 'Diskon berhasil ditambahkan';
+        header('location: ../src/pages/dashboard/add_discount.php');
+    } else {
+        $_SESSION['err'] = 'Diskon gagal ditambahkan';
+        header('location: ../src/pages/dashboard/add_discount.php');
     }
 }
 
@@ -402,6 +446,7 @@ function login($conn)
             $row = $result->fetch_assoc();
             $_SESSION['name'] = $row['username'];
             $_SESSION['email'] = $row['email'];
+            $_SESSION['profile'] = base_url() ."/". $row['image'];
             $_SESSION['loggedIn'] = true;
             $_SESSION['role'] = $row['role'];
             header('location: ../src/pages/dashboard/index.php');
