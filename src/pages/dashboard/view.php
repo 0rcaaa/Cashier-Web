@@ -201,7 +201,7 @@ if (!isset($_SESSION['loggedIn'])) {
           <tr>
           <td class="flex justify-center items-center border-b border-[#eee] px-4 py-5 pl-9 dark:border-strokedark xl:pl-11">
           <div class="h-12.5 w-15 rounded-md">
-          <img src="<?= base_url() ?>/${row.img}" alt="Product" class="rounded" />
+          <img src="<?= base_url() ?>/${row.img}" alt="Product" class="rounded w-10 h-auto" />
           </div>
           </td>
           <td class="border-b border-[#eee] px-4 py-5 dark:border-strokedark"><p class="text-sm text-center font-medium text-black dark:text-white">${row.product_name}</p></td>
