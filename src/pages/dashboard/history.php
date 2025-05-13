@@ -216,7 +216,7 @@ if (isset($_SESSION['loggedIn']) == False) {
             <td class="text-center px-4 py-2">${capitalize(order.status)}</td>
             <td class="text-center px-4 py-2">${formatDate(order.date)}</td>
             <td class="text-center px-4 py-2">
-              <a href="details.php?order_id=${order.order_number}" class="text-primary hover:underline">View</a>
+              <a href="transaction_details.php?order_id=${order.order_number}" class="text-primary hover:underline">View</a>
             </td>
           </tr>`;
       });

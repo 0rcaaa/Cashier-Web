@@ -232,7 +232,7 @@ function format_rupiah($angka)
         .then(response => response.json())
         .then(data => {
           alert('Payment successful!');
-          window.location.href = 'invoice.php?transaction=' + data.transaction_id;
+          window.location.href = 'transaction_details.php?transaction=' + data.transaction_id;
         })
         .catch(error => {
           console.error('Error:', error);
