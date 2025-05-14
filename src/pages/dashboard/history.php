@@ -69,7 +69,6 @@ if (isset($_SESSION['loggedIn']) == False) {
             class="rounded-sm border border-stroke bg-white px-5 pb-2.5 pt-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
             <div class="px-4 py-6 md:px-6 xl:px-7.5 flex items-center justify-between">
               <h4 class="text-xl font-bold text-black dark:text-white">Transactions</h4>
-              <a href="details.php?view=product" class="font-medium curpointer hover:text-primary"></a>
             </div>
             <div class="max-w-full overflow-x-auto">
               <table class="w-full table-auto">
@@ -216,7 +215,7 @@ if (isset($_SESSION['loggedIn']) == False) {
             <td class="text-center px-4 py-2">${capitalize(order.status)}</td>
             <td class="text-center px-4 py-2">${formatDate(order.date)}</td>
             <td class="text-center px-4 py-2">
-              <a href="transaction_details.php?order_id=${order.order_number}" class="text-primary hover:underline">View</a>
+              <a href="transaction_details.php?order=${order.order_number}" class="text-primary hover:underline">View</a>
             </td>
           </tr>`;
       });

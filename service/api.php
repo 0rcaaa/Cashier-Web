@@ -123,25 +123,31 @@ function getOrders($conn)
 
 function getInv($conn)
 {
-    $transaction_id = $_GET['transaction'];
+    $order_id = $_GET['order'];
     $stmt = $conn->prepare("SELECT 
     t.transaction_code AS noInv,
-    t.cash AS cash,
-    t.exchange AS exchange,
-    o.total_items AS total_items, 
-    o.total_price AS total_price,
-    m.name AS nama_pelanggan, 
-    p.name AS product_name, 
-    p.price AS price, 
-    od.total_price AS subPrice, 
-    od.qty AS qty
-    FROM transactions t
-    INNER JOIN orders o ON t.order_fid = o.id
-    INNER JOIN order_details od ON o.id = od.order_fid
-    INNER JOIN products p ON od.product_fid = p.id
-    LEFT JOIN members m ON o.member_id = m.id
-    WHERE t.id =?");
-    $stmt->bind_param("i", $transaction_id);
+    t.cash,
+    t.exchange,
+    t.date,
+    t.payment_method,
+    o.total_items,
+    o.total_price,
+    COALESCE(m.name, 'default') AS nama_pelanggan,
+    d.title,
+    d.percentage AS discount_value,
+    p.name AS product_name,
+    p.price AS price,
+    od.qty,
+    od.total_price AS subPrice
+        FROM transactions t
+        JOIN orders o ON t.order_fid = o.id
+        JOIN order_details od ON o.id = od.order_fid
+        JOIN products p ON od.product_fid = p.id
+        LEFT JOIN members m ON o.member_id = m.id
+        LEFT JOIN discounts d ON t.discount_id = d.id
+        WHERE o.id = ?
+");
+    $stmt->bind_param("i", $order_id);
     $stmt->execute();
     if ($result = $stmt->get_result()) {
         $items = $result->fetch_all(MYSQLI_ASSOC);
