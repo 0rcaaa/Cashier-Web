@@ -33,6 +33,9 @@ switch ($action) {
     case 'getProduct':
         getProducts($conn);
         break;
+    case 'getProductDetails':
+        getProductDetails($conn);
+        break;
     case 'get_inv':
         getInv($conn);
         break;
@@ -331,6 +334,19 @@ function getProducts($conn)
 
     echo json_encode($products);
     exit();
+}
+
+function getProductDetails($conn){
+    $stmt = $conn->prepare('SELECT * FROM products WHERE id = ? ');
+    $stmt->bind_param('i', $_GET['productId']);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if($result->num_rows >0){
+        $row = $result->fetch_all(MYSQLI_ASSOC);
+        echo json_encode($row);
+    } else{
+        echo json_encode(['error'=> 'gagal mendapatkan data']);
+    }
 }
 
 

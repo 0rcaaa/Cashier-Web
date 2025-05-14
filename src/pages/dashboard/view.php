@@ -214,7 +214,7 @@ if (!isset($_SESSION['loggedIn'])) {
           </td>
           <td class="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
           <div class="flex justify-center items-center space-x-3.5">
-          <a href="edit.php?id=${row.product_id}" class="hover:text-primary cursor-pointer">
+          <a href="edit_product.php?product=${row.product_id}" class="hover:text-primary cursor-pointer">
           <svg
           class="fill-current"
                                     width="18"
