@@ -54,35 +54,37 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 
-function new_member($conn){
+function new_member($conn)
+{
     //check apakah password dan konfirmasi password sama
-    if ($_POST['password'] == $_POST['cpass']){
+    if ($_POST['password'] == $_POST['cpass']) {
         //check apakah member sudah ada dari nomor telepon
         $stmt = $conn->prepare("SELECT * FROM members WHERE phone = ? LIMIT 1");
         $stmt->bind_param('s', $_POST['phone']);
         $stmt->execute();
-        if($stmt->get_result()->num_rows > 0){
-            echo json_encode(['error'=>'Member sudah ada']);
-        }else{
+        if ($stmt->get_result()->num_rows > 0) {
+            echo json_encode(['error' => 'Member sudah ada']);
+        } else {
             //hash password
             $hashed = password_hash($_POST['password'], PASSWORD_DEFAULT);
             //insert member ke database
             $stmt = $conn->prepare("INSERT INTO members (name, phone, password) VALUES (?,?,?)");
             $stmt->bind_param('sss', $_POST['username'], $_POST['phone'], $hashed);
-            if($stmt->execute()){
-                echo json_encode(['success'=>'Member berhasil ditambahkan']);
-            } else{
-                echo json_encode(['error'=>'kesalahan saat menambahkan member']);
+            if ($stmt->execute()) {
+                echo json_encode(['success' => 'Member berhasil ditambahkan']);
+            } else {
+                echo json_encode(['error' => 'kesalahan saat menambahkan member']);
             }
         }
-    } else{
+    } else {
         echo json_encode(['error' => 'passowrd tidak sama']);
     }
 }
 
-function add_discount($conn){
+function add_discount($conn)
+{
     $stmt = $conn->prepare("INSERT INTO discounts (title, percentage, points_required ,exp_at) VALUES (?,?,?,?)");
-    $stmt-> bind_param("siis", $_POST['title'], $_POST['percentage'], $_POST['PR'], $_POST['exp']);
+    $stmt->bind_param("siis", $_POST['title'], $_POST['percentage'], $_POST['PR'], $_POST['exp']);
     if ($stmt->execute()) {
         $_SESSION['success'] = 'Diskon berhasil ditambahkan';
         header('location: ../src/pages/dashboard/add_discount.php');
@@ -242,11 +244,24 @@ function transaction($conn)
 
     $order_id = (int)$data->order_id;
     $cash = (float)$data->cash;
-
-    // Generate transaction code
+    $discount_id = isset($data->discount_id) ? (int)$data->discount_id : 0;
     $code =  date('Ymd') . '-' . str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
 
-    // Hitung subtotal untuk kembalian (exchange)
+    // Ambil detail order dan member_id
+    $stmt = $conn->prepare("SELECT member_id FROM orders WHERE id = ?");
+    $stmt->bind_param('i', $order_id);
+    $stmt->execute();
+    $order = $stmt->get_result()->fetch_assoc();
+
+    if (!$order) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Order tidak ditemukan']);
+        exit;
+    }
+
+    $member_id = (int)$order['member_id'];
+
+    // Ambil subtotal
     $stmtSubtotal = $conn->prepare("
         SELECT SUM(p.price * od.qty) AS subtotal
         FROM order_details od
@@ -258,51 +273,108 @@ function transaction($conn)
     $resultSubtotal = $stmtSubtotal->get_result()->fetch_assoc();
     $subtotal = (float)$resultSubtotal['subtotal'];
 
-    $exchange = $cash - $subtotal;
-    if ($exchange < 0) $exchange = 0;
+    $exchange = 0;
+    $discount_value = 0;
 
-    // Mulai transaksi DB
-    $conn->begin_transaction();
+    // Jika ada diskon
+    if ($discount_id > 0) {
+        $stmtDisc = $conn->prepare("SELECT percentage, points_required FROM discounts WHERE id = ? AND exp_at > NOW()");
+        $stmtDisc->bind_param('i', $discount_id);
+        $stmtDisc->execute();
+        $discount = $stmtDisc->get_result()->fetch_assoc();
 
-    try {
-        // Insert transaction
-        $stmt = $conn->prepare("
-            INSERT INTO transactions (order_fid, transaction_code, cash, exchange)
-            VALUES (?, ?, ?, ?)
-        ");
-        $stmt->bind_param('issd', $order_id, $code, $cash, $exchange);
-        $stmt->execute();
-        $transaction_id = $stmt->insert_id;
+        if (!$discount) {
+            echo json_encode(['error' => 'Diskon tidak valid atau sudah kadaluarsa']);
+            exit;
+        }
 
-        // Update order status
-        $stmtOrder = $conn->prepare("
-            UPDATE orders SET status = 'paid' WHERE id = ?
-        ");
-        $stmtOrder->bind_param('i', $order_id);
-        $stmtOrder->execute();
+        $discount_value = ($discount['percentage'] / 100) * $subtotal;
+        $final_total = $subtotal - $discount_value;
+        $exchange = $cash - $final_total;
+        if ($exchange < 0) $exchange = 0;
 
-        // Update stock produk (chain query)
-        $stmtStock = $conn->prepare("
-            UPDATE products p
-            JOIN order_details od ON p.id = od.product_fid
-            SET p.stock = p.stock - od.qty
-            WHERE od.order_fid = ?
-        ");
-        $stmtStock->bind_param('i', $order_id);
-        $stmtStock->execute();
+        // Mulai transaksi
+        $conn->begin_transaction();
+        try {
+            // Insert transaksi
+            $stmt = $conn->prepare("
+                INSERT INTO transactions (order_fid, transaction_code, cash, exchange, discount_id)
+                VALUES (?, ?, ?, ?, ?)
+            ");
+            $stmt->bind_param('issdi', $order_id, $code, $cash, $exchange, $discount_id);
+            $stmt->execute();
+            $transaction_id = $stmt->insert_id;
 
-        // Commit transaksi
-        $conn->commit();
+            // Kurangi poin member
+            if ($member_id > 0) {
+                $stmt = $conn->prepare("UPDATE members SET points = points - ? WHERE id = ?");
+                $stmt->bind_param('ii', $discount['points_required'], $member_id);
+                $stmt->execute();
+            }
 
-        echo json_encode([
-            'success' => 'Transaksi berhasil',
-            'transaction_id' => $transaction_id,
-        ]);
-    } catch (Exception $e) {
-        $conn->rollback();
-        http_response_code(500);
-        echo json_encode(['error' => 'Gagal memproses transaksi', 'message' => $e->getMessage()]);
+            // Update order & stock
+            updateOrderAndStock($conn, $order_id);
+
+            $conn->commit();
+            echo json_encode(['success' => 'Transaksi berhasil', 'transaction_id' => $transaction_id]);
+        } catch (Exception $e) {
+            $conn->rollback();
+            http_response_code(500);
+            echo json_encode(['error' => 'Gagal memproses transaksi', 'message' => $e->getMessage()]);
+        }
     }
+    // Jika tanpa diskon
+    else {
+        $exchange = $cash - $subtotal;
+        if ($exchange < 0) $exchange = 0;
+
+        $conn->begin_transaction();
+        try {
+            // Insert transaksi
+            $stmt = $conn->prepare("
+                INSERT INTO transactions (order_fid, transaction_code, cash, exchange)
+                VALUES (?, ?, ?, ?)
+            ");
+            $stmt->bind_param('issd', $order_id, $code, $cash, $exchange);
+            $stmt->execute();
+            $transaction_id = $stmt->insert_id;
+
+            // Tambahkan poin jika ada member
+            if ($member_id > 0) {
+                $points_earned = floor($subtotal / 10000); // Contoh: setiap 10.000 = 1 poin
+                $stmt = $conn->prepare("UPDATE members SET points = points + ? WHERE id = ?");
+                $stmt->bind_param('ii', $points_earned, $member_id);
+                $stmt->execute();
+            }
+
+            // Update order & stock
+            updateOrderAndStock($conn, $order_id);
+
+            $conn->commit();
+            echo json_encode(['success' => 'Transaksi berhasil', 'transaction_id' => $transaction_id]);
+        } catch (Exception $e) {
+            $conn->rollback();
+            http_response_code(500);
+            echo json_encode(['error' => 'Gagal memproses transaksi', 'message' => $e->getMessage()]);
+        }
+    }
+}
+
+// Fungsi bantu update order dan stock
+function updateOrderAndStock($conn, $order_id)
+{
+    $stmtOrder = $conn->prepare("UPDATE orders SET status = 'paid' WHERE id = ?");
+    $stmtOrder->bind_param('i', $order_id);
+    $stmtOrder->execute();
+
+    $stmtStock = $conn->prepare("
+        UPDATE products p
+        JOIN order_details od ON p.id = od.product_fid
+        SET p.stock = p.stock - od.qty
+        WHERE od.order_fid = ?
+    ");
+    $stmtStock->bind_param('i', $order_id);
+    $stmtStock->execute();
 }
 
 
@@ -416,7 +488,7 @@ function scanProduct($conn)
     $code = trim($data['qrcode']); // Pastikan tidak ada spasi berlebih
 
     // Gunakan prepared statement untuk menghindari SQL Injection
-    $stmt = $conn->prepare("SELECT name, price, id FROM products WHERE uniqcode = ?");
+    $stmt = $conn->prepare("SELECT name, price, id FROM products WHERE uniqcode = ? AND stock > 0");
     $stmt->bind_param("s", $code);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -446,7 +518,7 @@ function login($conn)
             $row = $result->fetch_assoc();
             $_SESSION['name'] = $row['username'];
             $_SESSION['email'] = $row['email'];
-            $_SESSION['profile'] = base_url() ."/". $row['image'];
+            $_SESSION['profile'] = base_url() . "/" . $row['image'];
             $_SESSION['loggedIn'] = true;
             $_SESSION['role'] = $row['role'];
             header('location: ../src/pages/dashboard/index.php');
@@ -471,7 +543,7 @@ function login($conn)
             if (password_verify($password, $row['password'])) {
                 $_SESSION['name'] = $row['username'];
                 $_SESSION['email'] = $row['email'];
-                $_SESSION['profile'] = base_url() ."/". $row['image'];
+                $_SESSION['profile'] = base_url() . "/" . $row['image'];
                 $_SESSION['loggedIn'] = true;
                 $_SESSION['role'] = $row['role'];
 

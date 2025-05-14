@@ -241,7 +241,9 @@ if (isset($_SESSION['success'])) {
                     ['discount', discountValue],
                     ['subTotal', afterDiscount],
                     ['cash', parseInt(d.cash)],
+                    ['cashInv', parseInt(d.cash)],
                     ['exchange', kembalian],
+                    ['exchangeInv', kembalian],
 
                     ['subtotal', totalHarga],
                     ['qty', totalQty],
