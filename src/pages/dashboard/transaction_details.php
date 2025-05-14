@@ -102,13 +102,14 @@ if (isset($_SESSION['success'])) {
                                 <h1 class="text-xl font-medium dark:text-white text-black pb-2">Order Summary</h1>
                                 <div class="-my-3 divide-y divide-gray-200 dark:divide-gray-800">
                                     <dl class="flex items-center justify-between gap-4 py-3">
-                                        <dt class="text-base font-normal text-gray-500 dark:text-gray-400">Subtotal</dt>
-                                        <dd class="text-base font-medium text-gray-900 dark:text-white">IDR. <span id="sumTotal">---</span></dd>
-                                    </dl>
-
-                                    <dl class="flex items-center justify-between gap-4 py-3">
                                         <dt class="text-base font-normal text-gray-500 dark:text-gray-400">Items total</dt>
                                         <dd class="text-base font-medium text-gray-900 dark:text-white"><span id="sumItems">---</span></dd>
+                                    </dl>
+
+
+                                    <dl class="flex items-center justify-between gap-4 py-3">
+                                        <dt class="text-base font-normal text-gray-500 dark:text-gray-400">Subtotal</dt>
+                                        <dd class="text-base font-medium text-gray-900 dark:text-white">IDR. <span id="sumTotal">---</span></dd>
                                     </dl>
 
                                     <dl class="flex items-center justify-between gap-4 py-3">
@@ -117,8 +118,8 @@ if (isset($_SESSION['success'])) {
                                     </dl>
 
                                     <dl class="flex items-center justify-between gap-4 py-3">
-                                        <dt class="text-base font-normal text-gray-500 dark:text-gray-400">Discount Cut</dt>
-                                        <dd class="text-base font-medium text-green-500">IDR. <span id="discount">---</span></dd>
+                                        <dt class="text-base font-normal text-gray-500 dark:text-gray-400">Saved</dt>
+                                        <dd class="text-base font-medium text-green-500">IDR. <span id="saved">---</span></dd>
                                     </dl>
 
                                     <dl class="flex items-center justify-between gap-4 py-3">
@@ -172,12 +173,13 @@ if (isset($_SESSION['success'])) {
                                             </table>
 
                                             <div class="border-t border-dashed border-black pt-2 space-y-1 mb-4">
-                                                <div class="flex justify-between"><span>Subtotal</span><span id="subtotal">-</span></div>
                                                 <div class="flex justify-between"><span>Items</span><span id="qty">-</span></div>
-                                                <div class="flex justify-between"><span>Cash</span><span id="cash">-</span></div>
+                                                <div class="flex justify-between"><span>Subtotal</span><span id="subtotal">-</span></div>
+                                                <div class="flex justify-between"><span>Cash</span><span id="cashInv">-</span></div>
+                                                <div class="flex justify-between"><span>Discount</span><span id="discountInv">-</span></div>
                                                 <div class="border-y border-lg  border-black border-dashed"></div>
                                                 <div class="flex justify-between font-semibold text-lg"><span>Total</span><span id="Total">-</span></div>
-                                                <div class="flex justify-between"><span>Change</span><span id="exchange">-</span></div>
+                                                <div class="flex justify-between"><span>Change</span><span id="exchangeInv">-</span></div>
                                             </div>
 
                                             <p class="text-center text-xs text-gray-500">Terima kasih telah berbelanja di 0rca Store!</p>
@@ -231,14 +233,16 @@ if (isset($_SESSION['success'])) {
                 const totalQty = data.reduce((sum, i) => sum + parseInt(i.qty), 0);
                 const totalHarga = parseInt(d.total_price);
                 const discountValue = d.discount_value ? parseInt(d.discount_value) : 0;
-                const afterDiscount = totalHarga - discountValue;
+                const saved = (discountValue/100)*totalHarga;
+                const afterDiscount = totalHarga - saved;
                 const kembalian = parseInt(d.cash) - afterDiscount;
 
                 // Fill summary & invoice
                 [
                     ['sumTotal', totalHarga],
                     ['sumItems', totalQty],
-                    ['discount', discountValue],
+                    ['saved', saved],
+                    ['discountInv', saved],
                     ['subTotal', afterDiscount],
                     ['cash', parseInt(d.cash)],
                     ['cashInv', parseInt(d.cash)],
