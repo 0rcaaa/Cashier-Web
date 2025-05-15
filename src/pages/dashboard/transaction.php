@@ -68,8 +68,10 @@ if (isset($_SESSION['loggedIn']) == False) {
               <div class="flex justify-between py-4">
                 <h4 class="text-xl font-bold text-black dark:text-white ">Cart</h4>
                 <div class="p-1 rounded-lg shadow-md ">
-                  <input placeholder="Add by Uniqcode" class="rounded border border-stroke bg-gray p-1 font-medium text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary" type="text" name="barcodeInput" id="barcodeInput">
-                  <button onclick="barcodeInput()" class="bg-primary py-1 px-4 text-sm font-medium text-white hover:bg-meta-4 w-auto cursor-pointer rounded">Add Product</button>
+                  <form action="" id="searchBarcode">
+                    <input autofocus placeholder="Add by Uniqcode" class="rounded border border-stroke bg-gray p-1 font-medium text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary" type="text" name="barcodeInput" id="barcodeInput">
+                    <button type="submit"z class="bg-primary py-1 px-4 text-sm font-medium text-white hover:bg-meta-4 w-auto cursor-pointer rounded">Add Product</button>
+                  </form>
                 </div>
               </div>
               <div class="max-w-full overflow-x-auto">
@@ -186,9 +188,15 @@ if (isset($_SESSION['loggedIn']) == False) {
             return;
           }
           addProductRow(data);
+          document.getElementById("barcodeInput").value ='';
         })
         .catch(error => console.error('Error:', error));
     }
+
+    document.getElementById('searchBarcode').addEventListener('submit', function(event) {
+      event.preventDefault();
+      barcodeInput();
+    });
 
     function barcodeInput() {
       let barcode = document.getElementById("barcodeInput").value;

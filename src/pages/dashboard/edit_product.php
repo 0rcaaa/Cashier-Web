@@ -290,7 +290,7 @@ if (isset($_SESSION['loggedIn']) == False) {
                     </div>
                   </div>
 
-                  <svg id="barcode"></svg>
+                  <svg class="mx-auto mb-5" id="barcode"></svg>
                 </div>
                 <div class="flex justify-end gap-4.5 ">
                   <button
