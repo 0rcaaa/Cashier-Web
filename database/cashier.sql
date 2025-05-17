@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: May 13, 2025 at 02:13 PM
+-- Generation Time: May 17, 2025 at 08:10 AM
 -- Server version: 8.0.42-0ubuntu0.24.04.1
 -- PHP Version: 8.3.6
 
@@ -135,7 +135,7 @@ CREATE TABLE `members` (
 INSERT INTO `members` (`id`, `name`, `phone`, `password`, `points`, `created_at`, `updated_at`, `exp_at`) VALUES
 (0, 'default', '000000', '', 0, '2025-05-05 20:01:48', '2025-05-13 17:47:29', '2035-07-27 17:45:16'),
 (1, 'Andika', '123', '', 0, '2025-02-26 23:25:31', '2025-02-26 23:25:31', '2025-07-13 17:45:16'),
-(3, 'baltix', '312321', '$2y$10$Dqc.zLEEMJDp2A02QfFHtOx7gYyXeOIFNf11Y2ezv4iKCyTdVqRMK', 0, '2025-05-13 18:49:58', '2025-05-13 18:49:58', '2025-07-13 18:49:58');
+(3, 'baltix', '312321', '$2y$10$Dqc.zLEEMJDp2A02QfFHtOx7gYyXeOIFNf11Y2ezv4iKCyTdVqRMK', 5007, '2025-05-13 18:49:58', '2025-05-14 22:24:10', '2025-07-13 18:49:58');
 
 -- --------------------------------------------------------
 
@@ -162,7 +162,8 @@ INSERT INTO `orders` (`id`, `user_id`, `member_id`, `total_items`, `total_price`
 (1, 1, 1, 2, 119999, 'paid', '2025-05-12 01:08:43', '2025-05-12 01:15:43'),
 (2, 1, 0, 4, 108000, 'pending', '2025-05-12 16:14:27', '2025-05-12 16:14:27'),
 (3, 1, 0, 3, 80000, 'paid', '2025-05-12 16:15:58', '2025-05-12 16:16:07'),
-(4, 1, 1, 3, 175990, 'paid', '2025-05-12 16:21:00', '2025-05-12 16:21:08');
+(4, 1, 1, 3, 175990, 'paid', '2025-05-12 16:21:00', '2025-05-12 16:21:08'),
+(5, 1, 3, 3, 71998, 'paid', '2025-05-14 13:39:37', '2025-05-14 22:24:10');
 
 -- --------------------------------------------------------
 
@@ -191,7 +192,9 @@ INSERT INTO `order_details` (`id`, `order_fid`, `product_fid`, `qty`, `total_pri
 (6, 3, 11, 1, 12000),
 (7, 4, 4, 1, 56000),
 (8, 4, 10, 1, 99990),
-(9, 4, 2, 1, 20000);
+(9, 4, 2, 1, 20000),
+(10, 5, 1, 2, 19999),
+(11, 5, 12, 1, 32000);
 
 -- --------------------------------------------------------
 
@@ -220,14 +223,14 @@ CREATE TABLE `products` (
 --
 
 INSERT INTO `products` (`id`, `name`, `category_id`, `brand_id`, `price`, `stock`, `production_date`, `expiration_date`, `image`, `description`, `uniqcode`, `created_at`, `updated_at`) VALUES
-(1, 'Kacamata Bintang', 1, 1, 19999, 99, NULL, NULL, 'src/assets/images/product/1746947714_68204e82d575d.jpg', 'kacamata skena', '28076654', '2025-05-11 14:15:14', '2025-05-12 01:15:43'),
+(1, 'Kacamata Bintang', 1, 1, 19999, 97, NULL, NULL, 'src/assets/images/product/1746947714_68204e82d575d.jpg', 'kacamata skena', '28076654', '2025-05-11 14:15:14', '2025-05-14 22:24:10'),
 (2, 'Gelang Bintang', 2, 3, 20000, 199, NULL, NULL, 'src/assets/images/product/1746986221_6820e4edc0bbe.jpg', 'gelang skena', '22657658', '2025-05-12 00:57:01', '2025-05-12 16:21:08'),
 (3, 'earphone', 1, 3, 100000, 199, NULL, NULL, 'src/assets/images/product/1746986259_6820e5139c5e9.jpg', 'Budek', '94587366', '2025-05-12 00:57:39', '2025-05-12 01:15:43'),
 (4, 'Hoodie ', 2, 3, 56000, 199, NULL, NULL, 'src/assets/images/product/1746986298_6820e53a0be32.jpg', 'Hoodie skena', '67587749', '2025-05-12 00:58:18', '2025-05-12 16:21:08'),
 (5, 'Long Pants', 2, 3, 34000, 198, NULL, NULL, 'src/assets/images/product/1746986332_6820e55c7bfc3.jpg', 'Celana Oblong', '47782915', '2025-05-12 00:58:52', '2025-05-12 16:16:07'),
 (10, 'Converst Black Shoes', 2, 3, 99990, 199, NULL, NULL, 'src/assets/images/product/1746986702_6820e6ce2e8b6.jpeg', 'Sepatu Ireng', '83348143', '2025-05-12 01:05:02', '2025-05-12 16:21:08'),
 (11, 'Saturn Necklace', 2, 3, 12000, 199, NULL, NULL, 'src/assets/images/product/1746986755_6820e70370dd0.jpg', 'Gelang Besi', '00384592', '2025-05-12 01:05:55', '2025-05-12 16:16:07'),
-(12, 'ACE Ear Piercing', 2, 3, 32000, 200, NULL, NULL, 'src/assets/images/product/1746986809_6820e739b7264.jpg', 'Anting ACE ONE Piece', '33657605', '2025-05-12 01:06:49', '2025-05-12 01:06:49');
+(12, 'ACE Ear Piercing', 2, 3, 32000, 199, NULL, NULL, 'src/assets/images/product/1746986809_6820e739b7264.jpg', 'Anting ACE ONE Piece', '33657605', '2025-05-12 01:06:49', '2025-05-14 22:24:10');
 
 -- --------------------------------------------------------
 
@@ -240,7 +243,7 @@ CREATE TABLE `transactions` (
   `order_fid` int NOT NULL,
   `transaction_code` varchar(255) NOT NULL,
   `payment_method` enum('cash','debit','credit','ewallet','') NOT NULL,
-  `discount_id` int NOT NULL,
+  `discount_id` int NOT NULL DEFAULT '0',
   `cash` double NOT NULL,
   `exchange` double NOT NULL,
   `date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -253,7 +256,8 @@ CREATE TABLE `transactions` (
 INSERT INTO `transactions` (`id`, `order_fid`, `transaction_code`, `payment_method`, `discount_id`, `cash`, `exchange`, `date`) VALUES
 (1, 1, '20250511-7263', 'cash', 0, 200000, 80001, '2025-05-12 01:15:43'),
 (2, 3, '20250512-2581', 'cash', 0, 89999, 9999, '2025-05-12 16:16:07'),
-(3, 4, '20250512-7133', 'cash', 0, 200000, 24010, '2025-05-12 16:21:08');
+(3, 4, '20250512-7133', 'cash', 0, 200000, 24010, '2025-05-12 16:21:08'),
+(4, 5, '20250514-4734', 'cash', 2, 80000, 8002, '2025-05-14 22:24:10');
 
 -- --------------------------------------------------------
 
@@ -384,13 +388,13 @@ ALTER TABLE `members`
 -- AUTO_INCREMENT for table `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `order_details`
 --
 ALTER TABLE `order_details`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `products`
@@ -402,7 +406,7 @@ ALTER TABLE `products`
 -- AUTO_INCREMENT for table `transactions`
 --
 ALTER TABLE `transactions`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `verify_tokens`
