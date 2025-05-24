@@ -115,7 +115,7 @@
           <!-- Menu Item Profile -->
 
           <!-- Menu Item Profile -->
-          <li>
+          <!-- <li>
             <a
               class="group relative flex items-center gap-2.5 rounded-sm px-4 py-2 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4"
               href="view.php"
@@ -143,8 +143,126 @@
 
               View
             </a>
-          </li>
+          </li> -->
           <!-- Menu Item Profile -->
+
+          <!-- Menu Item view -->
+          <li>
+            <a
+              class="group relative flex items-center gap-2.5 rounded-sm px-4 py-2 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4"
+              href="#"
+              @click.prevent="selected = (selected === 'view' ? '':'view')"
+              :class="{ 'bg-graydark dark:bg-meta-4': (selected === 'view') }"
+            >
+              <svg
+                class="fill-current"
+                width="18"
+                height="18"
+                viewBox="0 0 22 16"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M11 15.1156C4.19376 15.1156 0.825012 8.61876 0.687512 8.34376C0.584387 8.13751 0.584387 7.86251 0.687512 7.65626C0.825012 7.38126 4.19376 0.918762 11 0.918762C17.8063 0.918762 21.175 7.38126 21.3125 7.65626C21.4156 7.86251 21.4156 8.13751 21.3125 8.34376C21.175 8.61876 17.8063 15.1156 11 15.1156ZM2.26876 8.00001C3.02501 9.27189 5.98126 13.5688 11 13.5688C16.0188 13.5688 18.975 9.27189 19.7313 8.00001C18.975 6.72814 16.0188 2.43126 11 2.43126C5.98126 2.43126 3.02501 6.72814 2.26876 8.00001Z"
+                  fill=""
+                />
+                <path
+                  d="M11 10.9219C9.38438 10.9219 8.07812 9.61562 8.07812 8C8.07812 6.38438 9.38438 5.07812 11 5.07812C12.6156 5.07812 13.9219 6.38438 13.9219 8C13.9219 9.61562 12.6156 10.9219 11 10.9219ZM11 6.625C10.2437 6.625 9.625 7.24375 9.625 8C9.625 8.75625 10.2437 9.375 11 9.375C11.7563 9.375 12.375 8.75625 12.375 8C12.375 7.24375 11.7563 6.625 11 6.625Z"
+                  fill=""
+                />
+              </svg>
+
+              Views
+
+              <svg
+                class="absolute right-4 top-1/2 -translate-y-1/2 fill-current"
+                :class="{ 'rotate-180': (selected === 'view') }"
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  fill-rule="evenodd"
+                  clip-rule="evenodd"
+                  d="M4.41107 6.9107C4.73651 6.58527 5.26414 6.58527 5.58958 6.9107L10.0003 11.3214L14.4111 6.91071C14.7365 6.58527 15.2641 6.58527 15.5896 6.91071C15.915 7.23614 15.915 7.76378 15.5896 8.08922L10.5896 13.0892C10.2641 13.4147 9.73651 13.4147 9.41107 13.0892L4.41107 8.08922C4.08563 7.76378 4.08563 7.23614 4.41107 6.9107Z"
+                  fill=""
+                />
+              </svg>
+            </a>
+
+            <!-- Dropdown Menu Start -->
+            <div
+              class="translate transform overflow-hidden"
+              :class="(selected === 'view') ? 'block' :'hidden'"
+            >
+              <ul class="mb-5.5 mt-4 flex flex-col gap-2.5 pl-6">
+                <li>
+                  <a
+                    class="group relative flex items-center gap-2.5 rounded-md px-4 font-medium text-bodydark2 duration-300 ease-in-out hover:text-white"
+                    href="view_accounts.php"
+                    :class="page === 'view_accounts' && '!text-white'"
+                  >
+                    Account
+                  </a>
+                </li>
+                
+                <li>
+                  <a
+                    class="group relative flex items-center gap-2.5 rounded-md px-4 font-medium text-bodydark2 duration-300 ease-in-out hover:text-white"
+                    href="view_bc.php?view=brands"
+                    :class="page === 'view_brands' && '!text-white'"
+                  >
+                    Brand
+                  </a>
+                </li>
+                
+                <li>
+                  <a
+                    class="group relative flex items-center gap-2.5 rounded-md px-4 font-medium text-bodydark2 duration-300 ease-in-out hover:text-white"
+                    href="view_bc.php?view=categories"
+                    :class="page === 'view_categories' && '!text-white'"
+                  >
+                    Category
+                  </a>
+                </li>
+
+                <li>
+                  <a
+                    class="group relative flex items-center gap-2.5 rounded-md px-4 font-medium text-bodydark2 duration-300 ease-in-out hover:text-white"
+                    href="view_discounts.php"
+                    :class="page === 'view_discounts' && '!text-white'"
+                  >
+                    Discount
+                  </a>
+                </li>
+
+                <li>
+                  <a
+                    class="group relative flex items-center gap-2.5 rounded-md px-4 font-medium text-bodydark2 duration-300 ease-in-out hover:text-white"
+                    href="view_members.php"
+                    :class="page === 'view_members' && '!text-white'"
+                  >
+                    Member
+                  </a>
+                </li>
+
+                <li>
+                  <a
+                    class="group relative flex items-center gap-2.5 rounded-md px-4 font-medium text-bodydark2 duration-300 ease-in-out hover:text-white"
+                    href="view_products.php"
+                    :class="page === 'view_products' && '!text-white'"
+                  >
+                    Product
+                  </a>
+                </li>
+                
+              </ul>
+            </div>
+            <!-- Dropdown Menu End -->
+          </li>
+          <!-- Menu Item view -->
 
           <!-- Menu Item add -->
           <li>

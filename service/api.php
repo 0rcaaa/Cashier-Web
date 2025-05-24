@@ -42,14 +42,264 @@ switch ($action) {
     case 'get_orders':
         getOrders($conn);
         break;
-
+    case 'getDiscounts':
+        getDiscounts($conn);
+        break;
+    case 'getMembers':
+        getMembers($conn);
+        break;
+    case 'getAdmins':
+        getAdmins($conn);
+        break;
     default:
         echo json_encode(['error' => 'Invalid request']);
         http_response_code(400);
 }
 
 // ====================== FUNCTION FETCH DATA ======================
+function getMembers($conn)
+{
+    $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+    $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+    $offset = ($page - 1) * $limit;
 
+    // Ambil filter dari request
+    $search = isset($_GET['search']) ? $_GET['search'] : '';
+    $status = isset($_GET['status']) ? $_GET['status'] : '';
+
+    // Bangun WHERE condition
+    $where = " WHERE m.id > 0 ";
+    $params = [];
+    $types = '';
+
+    // Filter Search Name
+    if (!empty($search)) {
+        $where .= " AND m.name OR m.phone LIKE ? ";
+        $params[] = "%$search%";
+        $types .= 's';
+    }
+
+    // Filter Status
+    if ($status === '1') {
+        $where .= " AND m.exp_at > NOW() ";
+    } elseif ($status === '0') {
+        $where .= " AND m.exp_at < NOW() ";
+    }
+
+    // Hitung total rows
+    $countQuery = "SELECT COUNT(*) AS total FROM members m $where";
+    $countStmt = $conn->prepare($countQuery);
+    if (!empty($types)) {
+        $countStmt->bind_param($types, ...$params);
+    }
+    $countStmt->execute();
+    $totalRows = $countStmt->get_result()->fetch_assoc()['total'];
+    $totalPages = ceil($totalRows / $limit);
+
+    // Query data dengan filter dan pagination
+    $query = "SELECT 
+        m.id AS id,
+        m.name AS Name,
+        m.phone AS Phone,
+        m.points AS Points,
+        CASE 
+            WHEN m.exp_at > NOW() THEN 'Active'
+            ELSE 'Expired'
+        END AS Status,
+        (SELECT COUNT(*) FROM orders o WHERE o.member_id = m.id) AS `Transaction`,
+        m.created_at AS `Created_at`
+    FROM members m
+    $where
+    ORDER BY m.created_at DESC
+    LIMIT ? OFFSET ?";
+    $params[] = $limit;
+    $params[] = $offset;
+    $types .= 'ii';
+
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param($types, ...$params);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows > 0) {
+        $members = $result->fetch_all(MYSQLI_ASSOC);
+        echo json_encode([
+            'data' => $members,
+            'current_page' => $page,
+            'total_pages' => $totalPages
+        ]);
+        exit();
+    } else {
+        echo json_encode(['error' => 'No members found']);
+        http_response_code(404);
+    }
+}
+
+function getAdmins($conn)
+{
+    $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+    $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+    $offset = ($page - 1) * $limit;
+
+    // Ambil filter dari request
+    $search = isset($_GET['search']) ? $_GET['search'] : '';
+    $role = isset($_GET['role']) ? $_GET['role'] : '';
+
+    // Bangun WHERE condition
+    $where = " WHERE a.id > 0 ";
+    $params = [];
+    $types = '';
+
+    // Filter Search Name
+    if (!empty($search)) {
+        $where .= " AND a.username OR a.email LIKE ? ";
+        $params[] = "%$search%";
+        $types .= 's';
+    }
+
+    // Filter Role
+    if (!empty($role)) {
+        $where .= " AND a.role = ? ";
+        $params[] = $role;
+        $types .= 's';
+    }
+
+    // Hitung total rows
+    $countQuery = "SELECT COUNT(*) AS total FROM admin a $where";
+    $countStmt = $conn->prepare($countQuery);
+    if (!empty($types)) {
+        $countStmt->bind_param($types, ...$params);
+    }
+    $countStmt->execute();
+    $totalRows = $countStmt->get_result()->fetch_assoc()['total'];
+    $totalPages = ceil($totalRows / $limit);
+
+    // Query data dengan filter dan pagination
+    $query = "SELECT 
+        a.id AS id,
+        a.username AS Name,
+        a.email AS Email,
+        a.role AS Role,
+        a.image AS Img,
+        a.created_at AS Created_at,
+        a.updated_at AS Updated_at
+    FROM admin a
+    $where
+    ORDER BY a.created_at DESC
+    LIMIT ? OFFSET ?";
+    $params[] = $limit;
+    $params[] = $offset;
+    $types .= 'ii';
+
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param($types, ...$params);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows > 0) {
+        $admins = $result->fetch_all(MYSQLI_ASSOC);
+        echo json_encode([
+            'data' => $admins,
+            'current_page' => $page,
+            'total_pages' => $totalPages
+        ]);
+        exit();
+    } else {
+        echo json_encode(['error' => 'No admins found']);
+        http_response_code(404);
+    }
+}
+
+
+function getDiscounts($conn)
+{
+    $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+    $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+    $offset = ($page - 1) * $limit;
+
+    // Ambil filter dari request
+    $search = isset($_GET['search']) ? $_GET['search'] : '';
+    $status = isset($_GET['status']) ? $_GET['status'] : '';
+    $minPoints = isset($_GET['min']) ? (int)$_GET['min'] : null;
+    $maxPoints = isset($_GET['max']) ? (int)$_GET['max'] : null;
+
+    // Mulai query
+    $where = " WHERE d.id > 0 ";
+    $params = [];
+    $types = '';
+
+    // Filter Search Title
+    if (!empty($search)) {
+        $where .= " AND d.title LIKE ? ";
+        $params[] = "%$search%";
+        $types .= 's';
+    }
+
+    // Filter Status
+    if ($status === '1') { // Available
+        $where .= " AND d.exp_at > NOW() ";
+    } elseif ($status === '0') { // Expired
+        $where .= " AND d.exp_at <= NOW() ";
+    }
+
+    // Filter Min Points
+    if (!is_null($minPoints)) {
+        $where .= " AND d.points_required >= ? ";
+        $params[] = $minPoints;
+        $types .= 'i';
+    }
+
+    // Filter Max Points
+    if (!is_null($maxPoints)) {
+        $where .= " AND d.points_required <= ? ";
+        $params[] = $maxPoints;
+        $types .= 'i';
+    }
+
+    // Hitung total rows
+    $countQuery = "SELECT COUNT(*) AS total FROM discounts d $where";
+    $countStmt = $conn->prepare($countQuery);
+    if (!empty($types)) {
+        $countStmt->bind_param($types, ...$params);
+    }
+    $countStmt->execute();
+    $totalRows = $countStmt->get_result()->fetch_assoc()['total'];
+    $totalPages = ceil($totalRows / $limit);
+
+    // Query data dengan filter dan pagination
+    $query = "SELECT 
+    d.id AS id,
+    d.title AS Title,
+    d.percentage AS Percentage,
+    d.points_required AS PR,
+    d.created_at AS CAT,
+    d.exp_at AS Exp,
+    (SELECT COUNT(*) FROM transactions t WHERE t.discount_id = d.id) AS Used
+FROM discounts d
+$where
+LIMIT ? OFFSET ?";
+    $params[] = $limit;
+    $params[] = $offset;
+    $types .= 'ii';
+
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param($types, ...$params);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows > 0) {
+        $discounts = $result->fetch_all(MYSQLI_ASSOC);
+        echo json_encode([
+            'data' => $discounts,
+            'current_page' => $page,
+            'total_pages' => $totalPages
+        ]);
+        exit();
+    } else {
+        echo json_encode(['error' => 'No discounts found']);
+        http_response_code(404);
+    }
+}
 function getOrders($conn)
 {
     $where = [];
@@ -70,7 +320,7 @@ function getOrders($conn)
         $where[] = 'o.status = ?';
         $params[] = $_GET['status'];
         $types .= 's';
-    }   
+    }
 
     if (!empty($_GET['date_from']) && !empty($_GET['date_to'])) {
         $where[] = "DATE(o.created_at) BETWEEN ? AND ?";
@@ -121,8 +371,6 @@ function getOrders($conn)
     $orders = $result->fetch_all(MYSQLI_ASSOC);
     echo json_encode($orders);
 }
-
-
 
 function getInv($conn)
 {
@@ -259,6 +507,55 @@ function getProducts($conn)
     $min_price = isset($_GET['min_price']) ? (int)$_GET['min_price'] : null;
     $max_price = isset($_GET['max_price']) ? (int)$_GET['max_price'] : null;
 
+    $page = isset($_GET['page']) ? max((int)$_GET['page'], 1) : 1;
+    $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+    $offset = ($page - 1) * $limit;
+
+    // ====== Hitung total produk ======
+    $countQuery = "SELECT COUNT(DISTINCT p.id) AS total
+                   FROM products p
+                   JOIN categories c ON p.category_id = c.id
+                   JOIN brands b ON p.brand_id = b.id
+                   WHERE 1";
+    $countParams = [];
+    $countTypes = '';
+
+    if ($search) {
+        $countQuery .= " AND (p.name LIKE ? OR c.name LIKE ? OR b.name LIKE ?) ";
+        $countTypes .= 'sss';
+        array_push($countParams, $search, $search, $search);
+    }
+    if ($brand) {
+        $countQuery .= " AND b.name = ? ";
+        $countTypes .= 's';
+        $countParams[] = $brand;
+    }
+    if ($category) {
+        $countQuery .= " AND c.name = ? ";
+        $countTypes .= 's';
+        $countParams[] = $category;
+    }
+    if ($min_price !== null) {
+        $countQuery .= " AND p.price >= ? ";
+        $countTypes .= 'i';
+        $countParams[] = $min_price;
+    }
+    if ($max_price !== null) {
+        $countQuery .= " AND p.price <= ? ";
+        $countTypes .= 'i';
+        $countParams[] = $max_price;
+    }
+
+    $stmtCount = $conn->prepare($countQuery);
+    if (!empty($countParams)) {
+        $stmtCount->bind_param($countTypes, ...$countParams);
+    }
+    $stmtCount->execute();
+    $totalResult = $stmtCount->get_result()->fetch_assoc();
+    $total = $totalResult['total'];
+    $total_pages = ceil($total / $limit);
+
+    // ====== Query data produk ======
     $query = "SELECT 
                 p.id AS product_id,
                 p.image AS img,
@@ -274,56 +571,43 @@ function getProducts($conn)
             LEFT JOIN order_details od ON p.id = od.product_fid
             WHERE 1 ";
 
-    // Dynamic filter
-    if ($search) {
-        $query .= " AND (p.name LIKE ? OR c.name LIKE ? OR b.name LIKE ?) ";
-    }
-    if ($brand) {
-        $query .= " AND b.name = ? ";
-    }
-    if ($category) {
-        $query .= " AND c.name = ? ";
-    }
-    if ($min_price !== null) {
-        $query .= " AND p.price >= ? ";
-    }
-    if ($max_price !== null) {
-        $query .= " AND p.price <= ? ";
-    }
-
-    $query .= " GROUP BY p.id, p.name, c.name, p.price, b.name
-                ORDER BY profit DESC
-                LIMIT 100";
-
-    $stmt = $conn->prepare($query);
-
-    // Bind parameter dinamis
     $types = '';
     $params = [];
 
     if ($search) {
+        $query .= " AND (p.name LIKE ? OR c.name LIKE ? OR b.name LIKE ?) ";
         $types .= 'sss';
-        $params[] = $search;
-        $params[] = $search;
-        $params[] = $search;
+        array_push($params, $search, $search, $search);
     }
     if ($brand) {
+        $query .= " AND b.name = ? ";
         $types .= 's';
         $params[] = $brand;
     }
     if ($category) {
+        $query .= " AND c.name = ? ";
         $types .= 's';
         $params[] = $category;
     }
     if ($min_price !== null) {
+        $query .= " AND p.price >= ? ";
         $types .= 'i';
         $params[] = $min_price;
     }
     if ($max_price !== null) {
+        $query .= " AND p.price <= ? ";
         $types .= 'i';
         $params[] = $max_price;
     }
 
+    $query .= " GROUP BY p.id, p.name, c.name, p.price, b.name
+                ORDER BY profit DESC
+                LIMIT ? OFFSET ?";
+
+    $types .= 'ii';
+    array_push($params, $limit, $offset);
+
+    $stmt = $conn->prepare($query);
     if (!empty($params)) {
         $stmt->bind_param($types, ...$params);
     }
@@ -332,48 +616,128 @@ function getProducts($conn)
     $result = $stmt->get_result();
     $products = $result->fetch_all(MYSQLI_ASSOC);
 
-    echo json_encode($products);
+    echo json_encode([
+        'data' => $products,
+        'current_page' => $page,
+        'total_pages' => $total_pages
+    ]);
     exit();
 }
 
-function getProductDetails($conn){
+function getProductDetails($conn)
+{
     $stmt = $conn->prepare('SELECT * FROM products WHERE id = ? ');
     $stmt->bind_param('i', $_GET['productId']);
     $stmt->execute();
     $result = $stmt->get_result();
-    if($result->num_rows >0){
+    if ($result->num_rows > 0) {
         $row = $result->fetch_all(MYSQLI_ASSOC);
         echo json_encode($row);
-    } else{
-        echo json_encode(['error'=> 'gagal mendapatkan data']);
+    } else {
+        echo json_encode(['error' => 'gagal mendapatkan data']);
     }
 }
 
-
 function getCategory($conn)
 {
-    $stmt = $conn->prepare("SELECT c.id AS id, c.name AS name, COUNT(p.id) AS relate_c
-                            FROM categories c
-                            LEFT JOIN products p ON c.id = p.id
-                            GROUP BY c.id, c.name ORDER BY c.id ASC");
+    $page = isset($_GET['page']) ? max((int)$_GET['page'], 1) : 1;
+    $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+    $offset = ($page - 1) * $limit;
+    $search = isset($_GET['search']) ? '%' . $conn->real_escape_string($_GET['search']) . '%' : null;
+
+    // Count total
+    $countSql = "SELECT COUNT(*) AS total FROM brands";
+    if ($search) {
+        $countSql .= " WHERE name LIKE ?";
+        $stmt = $conn->prepare($countSql);
+        $stmt->bind_param('s', $search);
+    } else {
+        $stmt = $conn->prepare($countSql);
+    }
+    $stmt->execute();
+    $totalResult = $stmt->get_result()->fetch_assoc();
+    $total = $totalResult['total'];
+    $total_pages = ceil($total / $limit);
+
+    // Select brands with product count
+    $dataSql = "SELECT c.id AS id, c.name AS name, COUNT(p.id) AS relate_c
+                FROM categories c
+                LEFT JOIN products p ON c.id = p.category_id";
+    if ($search) {
+        $dataSql .= " WHERE b.name LIKE ?";
+    }
+    $dataSql .= " GROUP BY c.id, c.name
+                  ORDER BY c.id ASC
+                  LIMIT ? OFFSET ?";
+
+    if ($search) {
+        $stmt = $conn->prepare($dataSql);
+        $stmt->bind_param('sii', $search, $limit, $offset);
+    } else {
+        $stmt = $conn->prepare($dataSql);
+        $stmt->bind_param('ii', $limit, $offset);
+    }
+
     $stmt->execute();
     $result = $stmt->get_result();
-    $categories = $result->fetch_all(MYSQLI_ASSOC);
+    $brands = $result->fetch_all(MYSQLI_ASSOC);
 
-    echo json_encode($categories);
+    echo json_encode([
+        'data' => $brands,
+        'current_page' => $page,
+        'total_pages' => $total_pages
+    ]);
     exit();
 }
 
 function getBrands($conn)
 {
-    $stmt = $conn->prepare("SELECT b.id AS id, b.name AS name, COUNT(p.id) AS relate_b
-                            FROM brands b
-                            LEFT JOIN products p ON b.id = p.id
-                            GROUP BY b.id, b.name ORDER BY b.id ASC");
+    $page = isset($_GET['page']) ? max((int)$_GET['page'], 1) : 1;
+    $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+    $offset = ($page - 1) * $limit;
+    $search = isset($_GET['search']) ? '%' . $conn->real_escape_string($_GET['search']) . '%' : null;
+
+    // Count total
+    $countSql = "SELECT COUNT(*) AS total FROM brands";
+    if ($search) {
+        $countSql .= " WHERE name LIKE ?";
+        $stmt = $conn->prepare($countSql);
+        $stmt->bind_param('s', $search);
+    } else {
+        $stmt = $conn->prepare($countSql);
+    }
+    $stmt->execute();
+    $totalResult = $stmt->get_result()->fetch_assoc();
+    $total = $totalResult['total'];
+    $total_pages = ceil($total / $limit);
+
+    // Select brands with product count
+    $dataSql = "SELECT b.id AS id, b.name AS name, COUNT(p.id) AS relate_b
+                FROM brands b
+                LEFT JOIN products p ON b.id = p.brand_id";
+    if ($search) {
+        $dataSql .= " WHERE b.name LIKE ?";
+    }
+    $dataSql .= " GROUP BY b.id, b.name
+                  ORDER BY b.id ASC
+                  LIMIT ? OFFSET ?";
+
+    if ($search) {
+        $stmt = $conn->prepare($dataSql);
+        $stmt->bind_param('sii', $search, $limit, $offset);
+    } else {
+        $stmt = $conn->prepare($dataSql);
+        $stmt->bind_param('ii', $limit, $offset);
+    }
+
     $stmt->execute();
     $result = $stmt->get_result();
     $brands = $result->fetch_all(MYSQLI_ASSOC);
 
-    echo json_encode($brands);
+    echo json_encode([
+        'data' => $brands,
+        'current_page' => $page,
+        'total_pages' => $total_pages
+    ]);
     exit();
 }

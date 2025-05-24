@@ -361,9 +361,6 @@ include '../../../service/connection.php';
                 </div>
               </div>
             </div>
-
-            <!-- ====== Chart Three End -->
-
           </div>
         </div>
       </main>
