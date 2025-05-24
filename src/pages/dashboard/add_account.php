@@ -16,6 +16,7 @@ if (isset($_SESSION['loggedIn']) == False) {
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Add Product</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" />
   <link href="../../assets/images/logo/logo_white.png" rel="icon">
   <link href="../../css/output.css" rel="stylesheet">
 </head>
@@ -228,6 +229,19 @@ if (isset($_SESSION['loggedIn']) == False) {
               </div>
             </form>
             <!-- ====== Settings Section End -->
+            <!-- Modal Crop -->
+            <div id="cropModal" class="hidden fixed inset-0 bg-gray-500/50 flex items-center justify-center z-100">
+              <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+                <h2 class="text-lg font-semibold mb-4">Crop Image</h2>
+                <div class="w-full h-64 overflow-hidden mb-4">
+                  <img id="cropImage" class="max-w-full max-h-full object-contain mx-auto" />
+                </div>
+                <div class="flex justify-end space-x-2">
+                  <button onclick="closeCropModal()" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">Cancel</button>
+                  <button onclick="cropImage()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Crop</button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </main>
@@ -237,28 +251,37 @@ if (isset($_SESSION['loggedIn']) == False) {
   </div>
   <!-- ===== Page Wrapper End ===== -->
   <script>
+    let croppedImageBlob = null; // Simpan hasil crop di global scope
+
     document.addEventListener("DOMContentLoaded", function() {
       setupImageUpload();
 
       const form = document.querySelector("form");
-  
+
       // Tangkap tombol submit (optional, kalau mau disable selama proses)
       const submitButton = form.querySelector('button[type="submit"]');
-  
+
       // Intercept submit form
       form.addEventListener("submit", function(e) {
         e.preventDefault(); // Hentikan form default submit
-  
+
         // Buat FormData dari form
         const formData = new FormData(form);
         formData.append("action", "new_acc");
-  
+
+        if (croppedImageBlob) {
+          formData.delete('image'); // Hapus file asli dari input
+          formData.append('image', croppedImageBlob, 'cropped.png'); // Tambah hasil crop
+        }
+
+        debugImageBeforeSubmit(formData);
+
         // Optional: Disable tombol biar ga double submit
         submitButton.disabled = true;
         submitButton.innerText = "Saving...";
-  
+
         // Kirim pakai Fetch
-        fetch('<?=base_url()?>/service/auth.php', {
+        fetch('<?= base_url() ?>/service/auth.php', {
             method: "POST",
             body: formData
           })
@@ -266,14 +289,14 @@ if (isset($_SESSION['loggedIn']) == False) {
           .then(response => {
             // Response sukses
             console.log(response.message);
-  
+
             // Contoh notifikasi
             alert(response.message);
-  
+
             // Reset form kalau mau
             form.reset();
             resetImage();
-  
+
             // Aktifkan tombol lagi
             submitButton.disabled = false;
             submitButton.innerText = "Save";
@@ -281,14 +304,37 @@ if (isset($_SESSION['loggedIn']) == False) {
           .catch(error => {
             console.error("Error:", error);
             alert("An error occurred while creating the account.");
-  
+
             // Aktifkan tombol lagi
             submitButton.disabled = false;
             submitButton.innerText = "Save";
           });
       });
     });
-    
+
+    function debugImageBeforeSubmit(formData) {
+      console.log("=== DEBUG: FormData Contents ===");
+      for (let [key, value] of formData.entries()) {
+        if (key === 'image') {
+          console.log(`Image sent:`, value);
+          if (value instanceof Blob) {
+            console.log(`Image is a Blob (likely cropped). Size: ${value.size} bytes, Type: ${value.type}`);
+            if (value instanceof File) {
+              console.log(`(Note: It's a File Blob. Name: ${value.name})`);
+            }
+          } else if (value instanceof File) {
+            console.log(`Image is a File (original upload). Name: ${value.name}, Size: ${value.size} bytes`);
+          } else {
+            console.log(`Image type: ${typeof value}`);
+          }
+        } else {
+          console.log(`${key}: ${value}`);
+        }
+      }
+      console.log("=== END DEBUG ===");
+    }
+
+
     function resetImage() {
       const img = document.getElementById('previewImage');
       const uploadedImg = document.getElementById('uploadedImg');
@@ -297,30 +343,55 @@ if (isset($_SESSION['loggedIn']) == False) {
       img.src = '';
       uploadedImg.classList.add('hidden');
       pImageTitles.style.display = 'flex';
+
+      croppedImageBlob = null; // Reset hasil crop
     }
 
+    let cropper;
 
     function setupImageUpload() {
-      const fileUpload = document.getElementById('FileUpload');
-      fileUpload.addEventListener('change', function() {
-        const file = this.querySelector('input[type="file"]').files[0];
-        const img = this.querySelector('#previewImage');
-        const pImageTitles = this.querySelector('#pImageTitles');
-        const uploadedImg = this.querySelector('#uploadedImg');
-
+      const fileInput = document.querySelector('#FileUpload input[type="file"]');
+      const cropImage = document.getElementById('cropImage');
+      fileInput.addEventListener('change', function() {
+        const file = this.files[0];
         if (file) {
-          const reader = new FileReader();
-          reader.onload = function(e) {
-            img.src = e.target.result;
-            uploadedImg.classList.remove('hidden');
-            uploadedImg.classList.add('flex');
-            pImageTitles.style.display = 'none';
-          }
-          reader.readAsDataURL(file);
+          const url = URL.createObjectURL(file);
+          cropImage.src = url;
+          document.getElementById('cropModal').style.display = 'flex';
+          cropImage.onload = () => {
+            if (cropper) cropper.destroy();
+            cropper = new Cropper(cropImage, {
+              aspectRatio: 1,
+              viewMode: 1
+            });
+          };
         }
       });
     }
+
+    function cropImage() {
+      if (cropper) {
+        cropper.getCroppedCanvas({
+          width: 800,
+          height: 800
+        }).toBlob(blob => {
+          croppedImageBlob = blob;
+
+          const img = document.getElementById('previewImage');
+          img.src = URL.createObjectURL(blob);
+          document.getElementById('uploadedImg').classList.remove('hidden');
+          document.getElementById('pImageTitles').style.display = 'none';
+
+          closeCropModal();
+        });
+      }
+    }
+
+    function closeCropModal() {
+      document.getElementById('cropModal').style.display = 'none';
+    }
   </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
   <script defer src="../../js/bundle.js"></script>
 
 

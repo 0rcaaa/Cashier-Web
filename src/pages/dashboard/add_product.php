@@ -8,10 +8,10 @@ if (isset($_SESSION['loggedIn']) == False) {
 }
 
 
-if(isset($_SESSION['success'])) {
+if (isset($_SESSION['success'])) {
   echo "<script>alert('$_SESSION[success]');</script>";
   unset($_SESSION['success']);
-} else if(isset($_SESSION['err'])) {
+} else if (isset($_SESSION['err'])) {
   echo "<script>alert('$_SESSION[err]');</script>";
   unset($_SESSION['err']);
 }
@@ -25,6 +25,7 @@ if(isset($_SESSION['success'])) {
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Add Product</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" />
   <link href="../../assets/images/logo/logo_white.png" rel="icon">
   <link href="../../css/output.css" rel="stylesheet">
 </head>
@@ -156,7 +157,7 @@ if(isset($_SESSION['success'])) {
                         <input
                           class="w-full rounded border border-stroke bg-gray px-4.5 py-3 font-medium text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
                           type="date"
-                          name="production"/>
+                          name="production" />
                       </div>
 
                       <div class="w-full sm:w-1/2">
@@ -166,8 +167,7 @@ if(isset($_SESSION['success'])) {
                         <input
                           class="w-full rounded border border-stroke bg-gray px-4.5 py-3 font-medium text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
                           type="date"
-                          name="exp"
-                          />
+                          name="exp" />
                       </div>
                     </div>
 
@@ -322,6 +322,19 @@ if(isset($_SESSION['success'])) {
                 </div>
               </div>
             </form>
+            <!-- Modal Crop -->
+            <div id="cropModal" class="hidden fixed inset-0 bg-gray-500/50 flex items-center justify-center z-100">
+              <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+                <h2 class="text-lg font-semibold mb-4">Crop Image</h2>
+                <div class="w-full h-64 overflow-hidden mb-4">
+                  <img id="cropImage" class="max-w-full max-h-full object-contain mx-auto" />
+                </div>
+                <div class="flex justify-end space-x-2">
+                  <button onclick="closeCropModal()" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">Cancel</button>
+                  <button onclick="cropImage()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Crop</button>
+                </div>
+              </div>
+            </div>
             <!-- ====== Settings Section End -->
           </div>
         </div>
@@ -331,20 +344,67 @@ if(isset($_SESSION['success'])) {
     <!-- ===== Content Area End ===== -->
   </div>
   <!-- ===== Page Wrapper End ===== -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+
   <script>
+    let croppedImageBlob = null; // Simpan hasil crop
     document.addEventListener("DOMContentLoaded", function() {
       populateCategoryDropdown();
       setupImageUpload();
       populateBrandDropdown();
+
+      const form = document.querySelector("form");
+      const submitButton = form.querySelector('button[type="submit"]');
+
+
+      form.addEventListener("submit", function(e) {
+        e.preventDefault();
+
+        let priceInput = document.getElementById("price");
+        priceInput.value = priceInput.value.replace(/[^0-9,]/g, "").replace(/\./g, ""); // Hapus "Rp." & titik
+
+        const formData = new FormData(form);
+
+        if (croppedImageBlob) {
+          formData.delete('image'); // Hapus file asli dari input
+          formData.append('image', croppedImageBlob, 'cropped.png'); // Tambah hasil crop
+        }
+
+        formData.append('action', 'addProduct');
+
+        submitButton.disabled = true;
+        submitButton.innerText = "Saving...";
+
+        fetch('<?= base_url() ?>/service/auth.php', {
+            method: "POST",
+            body: formData
+          })
+          .then(response => response.json())
+          .then(response => {
+            console.log(response.message);
+            alert(response.message);
+            form.reset();
+            resetImage();
+            submitButton.disabled = false;
+            submitButton.innerText = "Save";
+          })
+          .catch(error => {
+            console.error("Error:", error);
+            alert("An error occurred while creating the account.");
+            submitButton.disabled = false;
+            submitButton.innerText = "Save";
+          });
+      });
     });
+
+    
 
     function populateCategoryDropdown() {
       const kategori = document.getElementById("kategori");
-
       fetch("<?= base_url() ?>/service/api.php?action=getCategory")
         .then(response => response.json())
-        .then(data => {
-          data.forEach(item => {
+        .then(json => {
+          json.data.forEach(item => {
             const option = document.createElement("option");
             option.value = item.id;
             option.textContent = item.name;
@@ -353,14 +413,12 @@ if(isset($_SESSION['success'])) {
         });
     }
 
-
     function populateBrandDropdown() {
       const brand = document.getElementById("brand");
-
       fetch("<?= base_url() ?>/service/api.php?action=getBrands")
         .then(response => response.json())
-        .then(data => {
-          data.forEach(item => {
+        .then(json => {
+          json.data.forEach(item => {
             const option = document.createElement("option");
             option.value = item.id;
             option.textContent = item.name;
@@ -369,11 +427,9 @@ if(isset($_SESSION['success'])) {
         });
     }
 
-
     document.getElementById("price").addEventListener("input", function(event) {
-      let inputValue = event.target.value.replace(/[^\d,]/g, ""); // Hanya angka dan koma
-      inputValue = inputValue.replace(/,/g, "."); // Ganti koma dengan titik (opsional)
-
+      let inputValue = event.target.value.replace(/[^\d,]/g, "");
+      inputValue = inputValue.replace(/,/g, ".");
       let formattedValue = formatRupiah(inputValue);
       event.target.value = formattedValue;
     });
@@ -384,20 +440,12 @@ if(isset($_SESSION['success'])) {
       let sisa = split[0].length % 3;
       let rupiah = split[0].substr(0, sisa);
       let ribuan = split[0].substr(sisa).match(/\d{3}/g);
-
       if (ribuan) {
         let separator = sisa ? "." : "";
         rupiah += separator + ribuan.join(".");
       }
-
       return "Rp. " + rupiah + (split[1] ? "," + split[1] : "");
     }
-
-    // Saat form dikirim, format angka ke bentuk yang bisa diterima oleh backend
-    document.querySelector("form").addEventListener("submit", function() {
-      let priceInput = document.getElementById("price");
-      priceInput.value = priceInput.value.replace(/[^0-9,]/g, "").replace(/\./g, ""); // Hapus "Rp." & titik pemisah ribuan
-    });
 
     function resetImage() {
       const img = document.getElementById('previewImage');
@@ -407,30 +455,53 @@ if(isset($_SESSION['success'])) {
       img.src = '';
       uploadedImg.classList.add('hidden');
       pImageTitles.style.display = 'flex';
+
+      croppedImageBlob = null; // Reset hasil crop
     }
 
+    let cropper;
 
     function setupImageUpload() {
-      const fileUpload = document.getElementById('FileUpload');
-      fileUpload.addEventListener('change', function() {
-        const file = this.querySelector('input[type="file"]').files[0];
-        const img = this.querySelector('#previewImage');
-        const pImageTitles = this.querySelector('#pImageTitles');
-        const uploadedImg = this.querySelector('#uploadedImg');
-
+      const fileInput = document.querySelector('#FileUpload input[type="file"]');
+      const cropImage = document.getElementById('cropImage');
+      fileInput.addEventListener('change', function() {
+        const file = this.files[0];
         if (file) {
-          const reader = new FileReader();
-          reader.onload = function(e) {
-            img.src = e.target.result;
-            uploadedImg.classList.remove('hidden');
-            uploadedImg.classList.add('flex');
-            pImageTitles.style.display = 'none';
-          }
-          reader.readAsDataURL(file);
+          const url = URL.createObjectURL(file);
+          cropImage.src = url;
+          document.getElementById('cropModal').style.display = 'flex';
+          cropImage.onload = () => {
+            if (cropper) cropper.destroy();
+            cropper = new Cropper(cropImage, {
+              aspectRatio: 1,
+              viewMode: 1
+            });
+          };
         }
       });
     }
 
+    function cropImage() {
+      if (cropper) {
+        cropper.getCroppedCanvas({
+          width: 800,
+          height: 800
+        }).toBlob(blob => {
+          croppedImageBlob = blob;
+
+          const img = document.getElementById('previewImage');
+          img.src = URL.createObjectURL(blob);
+          document.getElementById('uploadedImg').classList.remove('hidden');
+          document.getElementById('pImageTitles').style.display = 'none';
+
+          closeCropModal();
+        });
+      }
+    }
+
+    function closeCropModal() {
+      document.getElementById('cropModal').style.display = 'none';
+    }
   </script>
   <script defer src="../../js/bundle.js"></script>
 

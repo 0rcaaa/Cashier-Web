@@ -240,7 +240,6 @@ function new_account($conn)
         echo json_encode(['mesasge' => 'Gagal membuat akun']);
     }
 }
-
 function transaction($conn)
 {
     $data = json_decode(file_get_contents("php://input"));
