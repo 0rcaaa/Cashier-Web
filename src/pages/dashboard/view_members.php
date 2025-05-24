@@ -53,7 +53,7 @@ if (!isset($_SESSION['loggedIn'])) {
           <div
             class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 class="text-title-md2 font-bold text-black dark:text-white">
-              Tables
+              View
             </h2>
 
             <nav>
@@ -61,7 +61,7 @@ if (!isset($_SESSION['loggedIn'])) {
                 <li>
                   <a class="font-medium hover:text-meta-5" href="index.php">Dashboard /</a>
                 </li>
-                <li class="font-medium text-primary">Tables</li>
+                <li class="font-medium text-primary">View Members</li>
               </ol>
             </nav>
           </div>
@@ -192,7 +192,7 @@ if (!isset($_SESSION['loggedIn'])) {
                   <td class="text-center px-4 py-2">${item.Status}</td>
                   <td class="text-center px-4 py-2">${item.Transaction}</td>
                   <td class="text-center px-4 py-2">${item.Created_at}</td>
-                  <td class="text-center px-4 py-2"><button onclick="document.location='edit_discount.php?product=${item.id}'" class="bg-primary text-white px-3 py-1 rounded">Edit</button></td>
+                  <td class="text-center px-4 py-2"><button onclick="document.location='edit_member.php?member=${item.id}'" class="bg-primary text-white px-3 py-1 rounded">Edit</button></td>
               </tr>
           `);
         

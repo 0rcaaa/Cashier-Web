@@ -61,7 +61,7 @@ if (!isset($_SESSION['loggedIn'])) {
                 <li>
                   <a class="font-medium hover:text-meta-5" href="index.php">Dashboard /</a>
                 </li>
-                <li class="font-medium text-primary">Tables</li>
+                <li class="font-medium text-primary">View Accounts</li>
               </ol>
             </nav>
           </div>
@@ -188,7 +188,7 @@ if (!isset($_SESSION['loggedIn'])) {
                   <td class="text-center px-4 py-2">${item.Role}</td>
                   <td class="text-center px-4 py-2">${item.Created_at}</td>
                   <td class="text-center px-4 py-2">${item.Updated_at}</td>
-                  <td class="text-center px-4 py-2"><button onclick="document.location='edit_discount.php?product=${item.id}'" class="bg-primary text-white px-3 py-1 rounded">Edit</button></td>
+                  <td class="text-center px-4 py-2"><button onclick="document.location='edit_account.php?account=${item.id}'" class="bg-primary text-white px-3 py-1 rounded">Edit</button></td>
               </tr>
           `);
         

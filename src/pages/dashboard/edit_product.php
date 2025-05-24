@@ -15,13 +15,13 @@ if (isset($_SESSION['loggedIn']) == False) {
   <meta charset="UTF-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Add Product</title>
+  <title>Edit Product</title>
   <link href="../../assets/images/logo/logo_white.png" rel="icon">
   <link href="../../css/output.css" rel="stylesheet">
 </head>
 
 <body
-  x-data="{ page: 'add_product', 'loaded': true, 'darkMode': true, 'stickyMenu': false, 'sidebarToggle': false, 'scrollTop': false }"
+  x-data="{ page: 'view_products', 'loaded': true, 'darkMode': true, 'stickyMenu': false, 'sidebarToggle': false, 'scrollTop': false }"
   x-init="
           darkMode = JSON.parse(localStorage.getItem('darkMode'));
           $watch('darkMode', value => localStorage.setItem('darkMode', JSON.stringify(value)))"
@@ -51,7 +51,7 @@ if (isset($_SESSION['loggedIn']) == False) {
             <div
               class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <h2 class="text-title-md2 font-bold text-black dark:text-white">
-                Add Product
+                Edit Product
               </h2>
 
               <nav>
@@ -59,7 +59,10 @@ if (isset($_SESSION['loggedIn']) == False) {
                   <li>
                     <a class="font-medium hover:text-meta-5" href="index.php">Dashboard /</a>
                   </li>
-                  <li class="font-medium text-primary">Add Product</li>
+                  <li>
+                    <a class="font-medium hover:text-meta-5" href="index.php">View Products /</a>
+                  </li>
+                  <li class="font-medium text-primary">Edit Product</li>
                 </ol>
               </nav>
             </div>
@@ -300,7 +303,7 @@ if (isset($_SESSION['loggedIn']) == False) {
                   </button>
                   <button
                     class="flex justify-center rounded bg-primary px-6 py-2 font-medium text-gray hover:bg-opacity-90"
-                    type="submit" value="addProduct" name="action">
+                    type="submit" value="upProduct" name="action">
                     Save
                   </button>
                 </div>

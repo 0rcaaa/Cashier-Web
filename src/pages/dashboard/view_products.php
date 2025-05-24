@@ -53,7 +53,7 @@ if (!isset($_SESSION['loggedIn'])) {
           <div
             class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 class="text-title-md2 font-bold text-black dark:text-white">
-              Tables
+              View
             </h2>
 
             <nav>
@@ -61,7 +61,7 @@ if (!isset($_SESSION['loggedIn'])) {
                 <li>
                   <a class="font-medium hover:text-meta-5" href="index.php">Dashboard /</a>
                 </li>
-                <li class="font-medium text-primary">Tables</li>
+                <li class="font-medium text-primary">View Products</li>
               </ol>
             </nav>
           </div>
@@ -74,27 +74,41 @@ if (!isset($_SESSION['loggedIn'])) {
 
               <table class="w-full table-auto">
 
-                <div class="flex flex-wrap justify-between gap-4 mb-4">
-                  <div class="">
-                    <input type="text" id="search_order" placeholder="Search Order No" class="border rounded p-2 mr-2" />
+                <div class="flex flex-wrap justify-between items-end gap-4 mb-4">
+                  <div class="flex items-end gap-2">
+                    <div class="flex flex-col">
+                      <label for="search">Search</label>
+                      <input type="text" name="search" id="search_order" placeholder="Search by Name" class="border rounded p-2 mr-2" />
+                    </div>
                     <button onclick="searchProduct()" class="bg-primary text-white px-4 py-2 rounded cursor-pointer">Search</button>
                   </div>
 
-                  <div class="flex flex-wrap gap-4 mb-4">
-                    <select id="filter_brand" class="border rounded p-2">
-                      <option value="">All Brands</option>
-                      <!-- Populate via PHP/JS kalau perlu -->
-                    </select>
+                  <div class="flex flex-wrap gap-4">
+                    <div class="flex flex-col">
+                      <label for="brand">Brand</label>
+                      <select name="brand" id="filter_brand" class="border rounded p-2">
+                        <option value="">All Brands</option>
+                      </select>
+                    </div>
+                    <div class="flex flex-col">
+                      <label for="category">Category</label>
+                      <select name="category" id="filter_category" class="border rounded p-2">
+                        <option value="">All Category</option>
+                      </select>
+                    </div>
 
-                    <select id="filter_category" class="border rounded p-2">
-                      <option value="">All Categories</option>
-                    </select>
-
-                    <input type="number" id="filter_min_price" placeholder="Min Price" class="border rounded p-2 w-[100px]">
-                    <input type="number" id="filter_max_price" placeholder="Max Price" class="border rounded p-2 w-[100px]">
-
-                    <button onclick="applyProductFilter()" class="bg-primary text-white px-4 py-2 rounded cursor-pointer">Apply</button>
-                    <button onclick="resetFilter()" class="bg-gray-500 text-white px-4 py-2 rounded cursor-pointer">Reset</button>
+                    <div class="flex flex-col">
+                      <label for="min">Minimum Price</label>
+                      <input type="number" name="min" id="filter_min_price" placeholder="Min Price" class="border rounded p-2 w-[100px]">
+                    </div>
+                    <div class="flex flex-col">
+                      <label for="max">Maximum Price</label>
+                      <input type="number" name="max" id="filter_max_price" placeholder="Max Price" class="border rounded p-2 w-[100px]">
+                    </div>
+                    <div class="flex items-end gap-2">
+                        <button onclick="applyFilter()" class="bg-primary text-white px-4 py-2 rounded">Apply</button>
+                      <button onclick="resetFilter()" class="bg-gray-500 text-white px-4 py-2 rounded">Reset</button>
+                    </div>
                   </div>
                 </div>
 

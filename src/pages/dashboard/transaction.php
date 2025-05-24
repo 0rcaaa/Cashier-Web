@@ -135,11 +135,6 @@ if (isset($_SESSION['loggedIn']) == False) {
                           <option value="">-</option>
                         </select></dd>
                       </dl> -->
-
-                      <dl class="flex items-center justify-between gap-4 py-3">
-                        <dt class="text-base font-bold text-gray-900 dark:text-white">Total</dt>
-                        <dd class="text-base font-bold text-gray-900 dark:text-white">IDR. <span id="subTotal">-</span></dd>
-                      </dl>
                     </div>
                   </div>
                   <form id="transactionForm" method="POST" action="">

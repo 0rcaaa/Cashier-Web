@@ -74,11 +74,12 @@ if (!isset($_SESSION['loggedIn'])) {
 
               <table class="w-full table-auto">
 
-                <div class="flex flex-wrap justify-between gap-4 mb-4">
-                  <div class="">
-                    <input type="text" id="search_order" placeholder="Search Order No" class="border rounded p-2 mr-2" />
-                    <button onclick="search()" class="bg-primary text-white px-4 py-2 rounded cursor-pointer">Search</button>
+                <div class="flex items-end gap-2 mb-4">
+                  <div class="flex flex-col">
+                    <label for="search">Search</label>
+                    <input type="text" name="search" id="search_order" placeholder="Search by UID or Title" class="border rounded p-2 mr-2" />
                   </div>
+                  <button onclick="search()" class="bg-primary text-white px-4 py-2 rounded cursor-pointer">Search</button>
                 </div>
 
                 <thead>

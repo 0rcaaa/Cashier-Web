@@ -77,7 +77,10 @@ if (!isset($_SESSION['loggedIn'])) {
                 <div class="flex flex-wrap justify-between items-end gap-4 mb-4">
                   <!-- Search -->
                   <div class="flex items-end gap-2">
-                    <input type="text" id="search" placeholder="Search Title" class="border rounded p-2" />
+                    <div class="flex flex-col">
+                      <label for="search">Search Discount</label>
+                      <input name="search "type="text" id="search" placeholder="Search Title" class="border rounded p-2" />
+                    </div>
                     <button onclick="search()" class="bg-primary text-white px-4 py-2 rounded">Search</button>
                   </div>
 
@@ -198,7 +201,7 @@ if (!isset($_SESSION['loggedIn'])) {
                   <td class="text-center px-4 py-2">${item.CAT}</td>
                   <td class="text-center px-4 py-2">${item.Exp}</td>
                   <td class="text-center px-4 py-2">${item.Used}</td>
-                  <td class="text-center px-4 py-2"><button onclick="document.location='edit_discount.php?product=${item.id}'" class="bg-primary text-white px-3 py-1 rounded">Edit</button></td>
+                  <td class="text-center px-4 py-2"><button onclick="document.location='edit_discount.php?discount=${item.id}'" class="bg-primary text-white px-3 py-1 rounded">Edit</button></td>
               </tr>
           `);
         

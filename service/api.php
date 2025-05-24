@@ -33,6 +33,15 @@ switch ($action) {
     case 'getProduct':
         getProducts($conn);
         break;
+    case 'getAccountDetails':
+        getAccD($conn);
+        break;
+    case 'getDiscountDetails':
+        getDD($conn);
+        break;
+    case 'getMemberDetails':
+        getMD($conn);
+        break;
     case 'getProductDetails':
         getProductDetails($conn);
         break;
@@ -57,6 +66,42 @@ switch ($action) {
 }
 
 // ====================== FUNCTION FETCH DATA ======================
+function getMD($conn){
+    $stmt = $conn->prepare('SELECT * FROM members WHERE id = ? ');
+    $stmt->bind_param('i', $_GET['memId']);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result->num_rows > 0) {
+        $row = $result->fetch_all(MYSQLI_ASSOC);
+        echo json_encode($row);
+    } else {
+        echo json_encode(['error' => 'gagal mendapatkan data']);
+    }
+}
+function getAccD($conn){
+    $stmt = $conn->prepare('SELECT * FROM admin WHERE id = ? ');
+    $stmt->bind_param('i', $_GET['accId']);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result->num_rows > 0) {
+        $row = $result->fetch_all(MYSQLI_ASSOC);
+        echo json_encode($row);
+    } else {
+        echo json_encode(['error' => 'gagal mendapatkan data']);
+    }
+}
+function getDD($conn){
+    $stmt = $conn->prepare('SELECT * FROM discounts WHERE id = ? ');
+    $stmt->bind_param('i', $_GET['disId']);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result->num_rows > 0) {
+        $row = $result->fetch_all(MYSQLI_ASSOC);
+        echo json_encode($row);
+    } else {
+        echo json_encode(['error' => 'gagal mendapatkan data']);
+    }
+}
 function getMembers($conn)
 {
     $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
