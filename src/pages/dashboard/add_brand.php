@@ -8,11 +8,11 @@ if (isset($_SESSION['loggedIn']) == False) {
 }
 
 if(isset($_SESSION['success'])) {
-  echo "<script>alert('".$_SESSION['success']."');</script>";
+  echo "<script>alert('$_SESSION[success]');</script>";
   unset($_SESSION['success']);
-} else if(isset($_SESSION['error'])) {
-  echo "<script>alert('".$_SESSION['error']."');</script>";
-  unset($_SESSION['error']);
+} else if(isset($_SESSION['err'])) {
+  echo "<script>alert('$_SESSION[err]');</script>";
+  unset($_SESSION['err']);
 }
 ?>
 

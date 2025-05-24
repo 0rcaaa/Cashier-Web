@@ -63,7 +63,7 @@ function new_member($conn)
         $stmt->bind_param('s', $_POST['phone']);
         $stmt->execute();
         if ($stmt->get_result()->num_rows > 0) {
-            echo json_encode(['error' => 'Member sudah ada']);
+            echo json_encode(['message' => 'Member sudah ada']);
         } else {
             //hash password
             $hashed = password_hash($_POST['password'], PASSWORD_DEFAULT);
@@ -71,18 +71,26 @@ function new_member($conn)
             $stmt = $conn->prepare("INSERT INTO members (name, phone, password) VALUES (?,?,?)");
             $stmt->bind_param('sss', $_POST['username'], $_POST['phone'], $hashed);
             if ($stmt->execute()) {
-                echo json_encode(['success' => 'Member berhasil ditambahkan']);
+                echo json_encode(['message' => 'Member berhasil ditambahkan']);
             } else {
-                echo json_encode(['error' => 'kesalahan saat menambahkan member']);
+                echo json_encode(['message' => 'kesalahan saat menambahkan member']);
             }
         }
     } else {
-        echo json_encode(['error' => 'passowrd tidak sama']);
+        echo json_encode(['message' => 'passowrd tidak sama']);
     }
 }
 
 function add_discount($conn)
 {
+    $stmt = $conn->prepare("SELECT * FROM discounts WHERE title = ? LIMIT 1");
+    $stmt->bind_param('s', $_POST['title']);
+    $stmt->execute();
+    if ($stmt->get_result()->num_rows > 0) {
+        $_SESSION['err'] = 'Diskon dengan judul tersebut sudah ada';
+        header('location: ../src/pages/dashboard/add_discount.php');
+        exit();
+    }
     $stmt = $conn->prepare("INSERT INTO discounts (title, percentage, points_required ,exp_at) VALUES (?,?,?,?)");
     $stmt->bind_param("siis", $_POST['title'], $_POST['percentage'], $_POST['PR'], $_POST['exp']);
     if ($stmt->execute()) {
@@ -146,7 +154,7 @@ function new_account($conn)
     // Pastikan semua data POST ada
     if (!isset($_POST['username'], $_POST['email'], $_POST['password'], $_POST['cpassword'], $_POST['role'])) {
         http_response_code(400);
-        echo json_encode(['error' => 'Data tidak lengkap']);
+        echo json_encode(['message' => 'Data tidak lengkap']);
         exit;
     }
 
@@ -156,11 +164,22 @@ function new_account($conn)
     $cpassword = $_POST['cpassword'];
     $role = $_POST['role'];
 
+
+    // Cek email sudah ada atau belum
+    $stmt = $conn->prepare("SELECT * FROM admin WHERE email = ? LIMIT 1");
+    $stmt->bind_param('s', $email);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result->num_rows > 0) {
+        echo json_encode(['message' => 'Email sudah terdaftar']);
+        exit;
+    }
+
     // Direktori target upload
     $targetDIR = __DIR__ . '/../src/assets/images/profiles/';
     if (!file_exists($targetDIR)) {
         if (!mkdir($targetDIR, 0755, true)) {
-            echo json_encode(['error' => 'Failed to create target directory']);
+            echo json_encode(['message' => 'Failed to create target directory']);
             exit;
         }
     }
@@ -170,7 +189,7 @@ function new_account($conn)
     $maxsize = 4194304; // 4 MB
 
     if (!isset($_FILES['image'])) {
-        echo json_encode(['error' => 'No image uploaded']);
+        echo json_encode(['message' => 'No image uploaded']);
         exit;
     }
 
@@ -180,12 +199,12 @@ function new_account($conn)
     $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
 
     if (!in_array($file_ext, $allowed)) {
-        echo json_encode(['error' => 'File type is not allowed. Please upload a png, jpg, or jpeg file instead.' . $file_ext]);
+        echo json_encode(['message' => 'File type is not allowed. Please upload a png, jpg, or jpeg file instead.' . $file_ext]);
         exit;
     }
 
     if ($file_size > $maxsize) {
-        echo json_encode(['error' => 'File is too large. File size should not exceed 4MB.']);
+        echo json_encode(['message' => 'File is too large. File size should not exceed 4MB.']);
         exit;
     }
 
@@ -194,12 +213,12 @@ function new_account($conn)
     $uploadDIR = $targetDIR . $new_name;
 
     if (!is_writable($targetDIR)) {
-        echo json_encode(['error' => 'Target directory is not writable.']);
+        echo json_encode(['message' => 'Target directory is not writable.']);
         exit;
     }
 
     if (!move_uploaded_file($file_tmp, $uploadDIR)) {
-        echo json_encode(['error' => 'Error while uploading the image']);
+        echo json_encode(['message' => 'Error while uploading the image']);
         exit;
     }
 
@@ -207,17 +226,7 @@ function new_account($conn)
 
     // Validasi password sama
     if ($password_input !== $cpassword) {
-        echo json_encode(['error' => 'Password tidak sama']);
-        exit;
-    }
-
-    // Cek email sudah ada atau belum
-    $stmt = $conn->prepare("SELECT * FROM admin WHERE email = ? LIMIT 1");
-    $stmt->bind_param('s', $email);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    if ($result->num_rows > 0) {
-        echo json_encode(['error' => 'Email sudah terdaftar']);
+        echo json_encode(['message' => 'Password tidak sama']);
         exit;
     }
 
@@ -226,9 +235,9 @@ function new_account($conn)
     $stmt = $conn->prepare("INSERT INTO admin (username, email, password, image, role) VALUES (?, ?, ?, ?, ?)");
     $stmt->bind_param('sssss', $username, $email, $password_hashed, $img, $role);
     if ($stmt->execute()) {
-        echo json_encode(['success' => 'Akun berhasil dibuat']);
+        echo json_encode(['message' => 'Akun berhasil dibuat']);
     } else {
-        echo json_encode(['error' => 'Gagal membuat akun']);
+        echo json_encode(['mesasge' => 'Gagal membuat akun']);
     }
 }
 
@@ -575,10 +584,20 @@ function add_product($conn)
 {
     // Debugging: Echo all submitted data
     //turn on to debug
-    echo '<pre>';
-    print_r($_POST);
-    print_r($_FILES);
-    echo '</pre>';
+    // echo '<pre>';
+    // print_r($_POST);
+    // print_r($_FILES);
+    // echo '</pre>';
+
+    $name = $_POST['productName'];
+    $stmt = $conn->prepare("SELECT * FROM products WHERE name = ? LIMIT 1");
+    $stmt->bind_param('s', $name);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result->num_rows > 0) {
+        $_SESSION['err'] = "Produk dengan nama $name sudah ada";
+        exit();
+    }
 
     $targetDIR = __DIR__ . '/../src/assets/images/product/';
     if (!file_exists($targetDIR)) {
@@ -620,7 +639,6 @@ function add_product($conn)
     }
 
     // Insert the product into the database
-    $name = $_POST['productName'];
     $price = $_POST['price'];
     $stock = $_POST['stock'];
     if ($_POST['production'] == '') {

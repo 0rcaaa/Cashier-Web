@@ -263,12 +263,12 @@ if (isset($_SESSION['loggedIn']) == False) {
             body: formData
           })
           .then(response => response.json()) // Asumsikan response JSON (ubah kalau beda)
-          .then(data => {
+          .then(response => {
             // Response sukses
-            console.log(data);
+            console.log(response.message);
   
             // Contoh notifikasi
-            alert(data.message || "Akun berhasil dibuat!");
+            alert(response.message);
   
             // Reset form kalau mau
             form.reset();

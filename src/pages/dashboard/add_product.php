@@ -6,6 +6,15 @@ if (isset($_SESSION['loggedIn']) == False) {
   header('location: ../auth/index.php');
   exit();
 }
+
+
+if(isset($_SESSION['success'])) {
+  echo "<script>alert('$_SESSION[success]');</script>";
+  unset($_SESSION['success']);
+} else if(isset($_SESSION['err'])) {
+  echo "<script>alert('$_SESSION[err]');</script>";
+  unset($_SESSION['err']);
+}
 ?>
 
 <!DOCTYPE html>
