@@ -1,19 +1,53 @@
 <?php
 session_start();
 require '../../../service/utility.php';
+require '../../../service/connection.php';
 
 if (isset($_SESSION['loggedIn']) == False) {
   header('location: ../auth/index.php');
   exit();
 }
 
-if(isset($_SESSION['success'])) {
-  echo "<script>alert('$_SESSION[success]');</script>";
-  unset($_SESSION['success']);
-} else if(isset($_SESSION['err'])) {
-  echo "<script>alert('$_SESSION[err]');</script>";
-  unset($_SESSION['err']);
+$ENDPOINT  = $_GET['type'] ?? '';
+$ID = $_GET['id'] ?? '';
+
+if (empty($ENDPOINT) || empty($ID)) {
+  header('location: index.php');
+  exit;
 }
+
+$stmt = $conn->prepare("SELECT name FROM $ENDPOINT WHERE id = ?");
+$stmt->bind_param("i", $ID);
+$stmt->execute();
+$result = $stmt->get_result();
+if ($result->num_rows === 0) {
+  echo "<script>alert('no data found')</script>";
+}
+$row = $result->fetch_assoc();
+
+if (isset($_POST['change'])) {
+  $name = $_POST['brandName'] ?? '';
+  if (empty($name)) {
+    echo "<script>alert('Please fill all fields');</script>";
+  } else {
+    $stmtCHECK = $conn->prepare("SELECT id FROM $ENDPOINT WHERE name = ?");
+    $stmtCHECK->execute([$name]);
+    if ($stmtCHECK->fetch()) {
+      echo "<script>alert('Brand with the same name already exist');</script>";
+      exit;
+    }
+
+
+    $stmt = $conn->prepare("UPDATE $ENDPOINT SET name = ? WHERE id = ?");
+    $stmt->bind_param("si", $name, $ID);
+    if ($stmt->execute()) {
+      echo "<script>alert('Brand updated successfully');</script>";
+    } else {
+      echo "<script>alert('Error updating brand');</script>";
+    }
+  }
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -74,7 +108,7 @@ if(isset($_SESSION['success'])) {
             <!-- Breadcrumb End -->
 
             <!-- ====== Settings Section Start -->
-            <form action="<?= base_url() ?>/service/auth.php" method="POST" class="grid grid-cols-5 gap-8">
+            <form action="" method="POST" class="grid grid-cols-5 gap-8">
               <div class="col-span-5 xl:col-span-3">
                 <div
                   class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
@@ -93,8 +127,9 @@ if(isset($_SESSION['success'])) {
                       <input
                         class=" w-full rounded border border-stroke bg-gray px-4.5 py-3 font-medium text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
                         name="brandName"
+                        value="<?= $row['name'] ?>"
                         id="brandName"
-                        type="text"/>
+                        type="text" />
                     </div>
 
                     <div class="flex justify-end gap-4.5 mt-6">
@@ -105,7 +140,7 @@ if(isset($_SESSION['success'])) {
                       </button>
                       <button
                         class="flex justify-center rounded bg-primary px-6 py-2 font-medium text-gray hover:bg-opacity-90"
-                        type="submit" value="addBrand" name="action">
+                        type="submit" value="change" name="change">
                         Save
                       </button>
                     </div>
@@ -121,7 +156,6 @@ if(isset($_SESSION['success'])) {
     </div>
     <!-- ===== Content Area End ===== -->
   </div>
-  <!-- ===== Page Wrapper End ===== -->
   <script defer src="../../js/bundle.js"></script>
 
 </body>

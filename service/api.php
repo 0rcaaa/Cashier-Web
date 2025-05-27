@@ -179,7 +179,6 @@ function getMembers($conn)
         http_response_code(404);
     }
 }
-
 function getAdmins($conn)
 {
     $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
@@ -191,9 +190,9 @@ function getAdmins($conn)
     $role = isset($_GET['role']) ? $_GET['role'] : '';
 
     // Bangun WHERE condition
-    $where = " WHERE a.id > 0 ";
-    $params = [];
-    $types = '';
+    $where = " WHERE a.id > 0  AND a.email != ?";
+    $params[] = $_SESSION['email'];
+    $types = 's';
 
     // Filter Search Name
     if (!empty($search)) {
@@ -254,8 +253,6 @@ function getAdmins($conn)
         http_response_code(404);
     }
 }
-
-
 function getDiscounts($conn)
 {
     $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
@@ -416,7 +413,6 @@ function getOrders($conn)
     $orders = $result->fetch_all(MYSQLI_ASSOC);
     echo json_encode($orders);
 }
-
 function getInv($conn)
 {
     $order_id = $_GET['order'];
@@ -453,7 +449,6 @@ function getInv($conn)
         http_response_code(404);
     }
 }
-
 // Fetch Data Dashboard
 function dashboardData($conn)
 {
@@ -543,7 +538,6 @@ WHERE DATE(t.created_at) = CURDATE() - INTERVAL 1 DAY
 
     exit();
 }
-
 function getProducts($conn)
 {
     $search = isset($_GET['search']) ? '%' . $conn->real_escape_string($_GET['search']) . '%' : null;
@@ -668,7 +662,6 @@ function getProducts($conn)
     ]);
     exit();
 }
-
 function getProductDetails($conn)
 {
     $stmt = $conn->prepare('SELECT * FROM products WHERE id = ? ');
@@ -682,7 +675,6 @@ function getProductDetails($conn)
         echo json_encode(['error' => 'gagal mendapatkan data']);
     }
 }
-
 function getCategory($conn)
 {
     $page = isset($_GET['page']) ? max((int)$_GET['page'], 1) : 1;
@@ -734,7 +726,6 @@ function getCategory($conn)
     ]);
     exit();
 }
-
 function getBrands($conn)
 {
     $page = isset($_GET['page']) ? max((int)$_GET['page'], 1) : 1;

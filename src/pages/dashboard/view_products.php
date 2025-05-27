@@ -265,9 +265,9 @@ if (!isset($_SESSION['loggedIn'])) {
       ];
 
       filters.forEach(f => {
-        fetchData(f.action).then(data => {
+        fetchData(f.action).then(json => {
           const select = document.getElementById(f.id);
-          data.forEach(item => {
+          json.data.forEach(item => {
             select.insertAdjacentHTML('beforeend',
               `<option value="${item.name}">${item.name}</option>`);
           });

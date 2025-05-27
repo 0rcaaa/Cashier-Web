@@ -21,7 +21,7 @@ if (isset($_SESSION['loggedIn']) == False) {
 </head>
 
 <body
-  x-data="{ page: 'add_member', 'loaded': true, 'darkMode': true, 'stickyMenu': false, 'sidebarToggle': false, 'scrollTop': false }"
+  x-data="{ page: 'view_members', 'loaded': true, 'darkMode': true, 'stickyMenu': false, 'sidebarToggle': false, 'scrollTop': false }"
   x-init="
           darkMode = JSON.parse(localStorage.getItem('darkMode'));
           $watch('darkMode', value => localStorage.setItem('darkMode', JSON.stringify(value)))"
@@ -69,7 +69,7 @@ if (isset($_SESSION['loggedIn']) == False) {
             <!-- Breadcrumb End -->
 
             <!-- ====== Settings Section Start -->
-            <form action="<?= base_url() ?>/service/auth.php" method="POST" enctype="multipart/form-data" class="grid grid-cols-5 gap-8">
+            <form action="" method="POST" enctype="multipart/form-data" class="grid grid-cols-5 gap-8">
               <div class="col-span-5 xl:col-span-3">
                 <div
                   class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
@@ -186,6 +186,13 @@ if (isset($_SESSION['loggedIn']) == False) {
           }
           const mem = data[0];
 
+          originalData = {
+            memberId: mem.id,
+            name: mem.name || '',
+            phone: mem.phone || '',
+            points: mem.points || '',
+          }
+
           // Isi form input
           document.getElementById('username').value = mem.name || '';
           document.getElementById('phone').value = mem.phone || '';
@@ -212,16 +219,42 @@ if (isset($_SESSION['loggedIn']) == False) {
       form.addEventListener("submit", function(e) {
         e.preventDefault(); // Hentikan form default submit
 
-        // Buat FormData dari form
-        const formData = new FormData(form);
-        formData.append("action", "newMember");
+        const updatedData = {
+          name: document.getElementById('username').value.trim(),
+          phone: document.getElementById('phone').value.trim(),
+          points: parseInt(document.getElementById('points').value)
+        };
 
+        // Cek apakah data berbeda
+        const isChanged = Object.keys(updatedData).some(key => updatedData[key] !== originalData[key]);
+        const pw = document.getElementById('password');
+        const cPw = document.getElementById('cpass');
+
+        if (!isChanged && !pw.value) {
+          alert("Tidak ada perubahan data untuk disimpan.");
+          return;
+        }
+        const formData = new FormData();
+        formData.append('action', 'Member');
+        formData.append('memId', <?= $_GET['member']?>);
+        formData.append('name', updatedData.name);
+        formData.append('phone', updatedData.phone);
+        formData.append('points', updatedData.points);
+
+        if (pw.value !== cPw.value) {
+          alert("pw gk sama");
+          return;
+        } else if (pw.value === cPw.value && pw.value !== '') {
+          formData.append('password', pw.value);
+        }
+
+        console.log(formData);
         // Optional: Disable tombol biar ga double submit
         submitButton.disabled = true;
         submitButton.innerText = "Saving...";
 
         // Kirim pakai Fetch
-        fetch('<?= base_url() ?>/service/auth.php', {
+        fetch('<?= base_url() ?>/service/edit.php', {
             method: "POST",
             body: formData
           })
@@ -229,20 +262,15 @@ if (isset($_SESSION['loggedIn']) == False) {
           .then(response => {
             // Response sukses
             console.log(response.message);
-
             // Contoh notifikasi
             alert(response.message);
-
-            // Reset form kalau mau
-            form.reset();
-
             // Aktifkan tombol lagi
             submitButton.disabled = false;
             submitButton.innerText = "Save";
           })
           .catch(error => {
-            console.error("Error:", error);
-            alert("An error occurred while creating the account.");
+            console.log( error);
+            alert("An error occurred while creating the account." + error.message);
 
             // Aktifkan tombol lagi
             submitButton.disabled = false;

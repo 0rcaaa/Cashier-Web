@@ -220,7 +220,7 @@ if (isset($_SESSION['loggedIn']) == False) {
                 <div class="flex justify-end gap-4.5">
                   <button
                     class="flex justify-center rounded border border-stroke px-6 py-2 font-medium text-black hover:shadow-1 dark:border-strokedark dark:text-white"
-                    type="reset">
+                    type="reset" onclick="reload()">
                     Reset All
                   </button>
                   <button
@@ -254,67 +254,28 @@ if (isset($_SESSION['loggedIn']) == False) {
   </div>
   <!-- ===== Page Wrapper End ===== -->
   <script>
+    //ambil elemen
+    let cropper;
     let croppedImageBlob = null; // Simpan hasil crop di global scope
+    let originalData = {}; // Variabel global untuk menyimpan data awal
+    // ambil form
+    const form = document.querySelector("form");
+    // Tangkap tombol submit (optional, kalau mau disable selama proses)
+    const submitButton = form.querySelector('button[type="submit"]');
 
     document.addEventListener("DOMContentLoaded", function() {
       setupImageUpload();
-      getData(<?=$_GET['account'] ?>);
-
-      const form = document.querySelector("form");
-
-      // Tangkap tombol submit (optional, kalau mau disable selama proses)
-      const submitButton = form.querySelector('button[type="submit"]');
-
-      // Intercept submit form
-      form.addEventListener("submit", function(e) {
-        e.preventDefault(); // Hentikan form default submit
-
-        // Buat FormData dari form
-        const formData = new FormData(form);
-        formData.append("action", "new_acc");
-
-        if (croppedImageBlob) {
-          formData.delete('image'); // Hapus file asli dari input
-          formData.append('image', croppedImageBlob, 'cropped.png'); // Tambah hasil crop
-        }
-
-        debugImageBeforeSubmit(formData);
-
-        // Optional: Disable tombol biar ga double submit
-        submitButton.disabled = true;
-        submitButton.innerText = "Saving...";
-
-        // Kirim pakai Fetch
-        fetch('<?= base_url() ?>/service/auth.php', {
-            method: "POST",
-            body: formData
-          })
-          .then(response => response.json()) // Asumsikan response JSON (ubah kalau beda)
-          .then(response => {
-            // Response sukses
-            console.log(response.message);
-
-            // Contoh notifikasi
-            alert(response.message);
-
-            // Reset form kalau mau
-            form.reset();
-            resetImage();
-
-            // Aktifkan tombol lagi
-            submitButton.disabled = false;
-            submitButton.innerText = "Save";
-          })
-          .catch(error => {
-            console.error("Error:", error);
-            alert("An error occurred while creating the account.");
-
-            // Aktifkan tombol lagi
-            submitButton.disabled = false;
-            submitButton.innerText = "Save";
-          });
-      });
+      getData(<?= $_GET['account'] ?>);
     });
+    // Intercept submit form
+    form.addEventListener("submit", function(e) {
+      e.preventDefault(); // Hentikan form default submit
+      updateDataIfChanged(<?= $_GET['account'] ?>);
+    });
+
+    function reload(){
+      window.location.reload
+    }
 
     function getData(id) {
       const url = `<?= base_url() ?>/service/api.php?action=getAccountDetails&accId=${id}`;
@@ -328,10 +289,18 @@ if (isset($_SESSION['loggedIn']) == False) {
           }
           const acc = data[0];
 
+          // Simpan data asli untuk perbandingan nanti
+          originalData = {
+            username: acc.username || '',
+            email: acc.email || '',
+            role: acc.role || '',
+            image: acc.image || ''
+          };
+
           // Isi form input
-          document.getElementById('username').value = acc.username || '';
-          document.getElementById('email').value = acc.email || '';
-          document.getElementById('role').value = acc.role || '';
+          document.getElementById('username').value = originalData.username;
+          document.getElementById('email').value = originalData.email;
+          document.getElementById('role').value = originalData.role;
 
           // Preview gambar
           if (acc.image) {
@@ -342,7 +311,89 @@ if (isset($_SESSION['loggedIn']) == False) {
           }
         }).catch(err => {
           console.error("Fetch error:", err);
-          alert("Terjadi kesalahan saat mengambil data produk.");
+          alert("Terjadi kesalahan saat mengambil data akun.");
+        });
+    }
+
+    function updateDataIfChanged(id) {
+      const updatedData = {
+        username: document.getElementById('username').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        role: document.getElementById('role').value.trim()
+      };
+
+      // Cek apakah data berbeda
+      const isChanged = Object.keys(updatedData).some(key => updatedData[key] !== originalData[key]);
+      const pw = document.getElementById('password');
+      const cPw = document.getElementById('cpassword');
+
+      // Cek perubahan gambar
+      const currentImageSrc = document.getElementById('previewImage').src;
+      const originalImageSrc = originalData.image ? '<?= base_url() ?>/' + originalData.image : '';
+      const isImageChanged = currentImageSrc !== originalImageSrc;
+
+      if (!isChanged && !isImageChanged && !pw.value) {
+        alert("Tidak ada perubahan data untuk disimpan.");
+        return;
+      }
+      const formData = new FormData();
+      formData.append('action', 'Account');
+      formData.append('accId', id);
+      formData.append('username', updatedData.username);
+      formData.append('email', updatedData.email);
+      formData.append('role', updatedData.role);
+
+      if (isImageChanged) {
+        if (croppedImageBlob) {
+          formData.append('image', croppedImageBlob, 'cropped.png');
+        } else {
+          const fileInput = document.querySelector('#FileUpload input[type="file"]');
+          if (fileInput.files.length > 0) {
+            formData.append('image', fileInput.files[0]);
+          } else {
+            alert("Gambar berubah tapi tidak ada file baru. Masukkan gambar terlebih dahulu.");
+            return;
+          }
+        }
+      }
+
+      if (pw.value !== cPw.value) {
+        alert("pw gk sama");
+        return;
+      } else if (pw.value === cPw.value && pw.value !== '') {
+        formData.append('password', pw.value);
+      }
+
+      console.log(formData);
+
+      // Optional: Disable tombol biar ga double submit
+      submitButton.disabled = true;
+      submitButton.innerText = "Saving...";
+
+
+      // Kirim AJAX POST
+      fetch('<?= base_url() ?>/service/edit.php', {
+          method: 'POST',
+          body: formData
+        })
+        .then(res => res.json())
+        .then(response => {
+          if (response.success) {
+            // Contoh notifikasi
+            alert(response.message);
+          } else {
+            alert("Gagal memperbarui data: " + response.message);
+          }
+        })
+        .catch(err => {
+          console.error("Update error:", err);
+          alert("Terjadi kesalahan saat memperbarui data." + err.message);
+        })
+        .finally(()=>{
+          
+      // Aktifkan tombol lagi
+      submitButton.disabled = false;
+      submitButton.innerText = "Save";
         });
     }
 
@@ -380,8 +431,6 @@ if (isset($_SESSION['loggedIn']) == False) {
 
       croppedImageBlob = null; // Reset hasil crop
     }
-
-    let cropper;
 
     function setupImageUpload() {
       const fileInput = document.querySelector('#FileUpload input[type="file"]');

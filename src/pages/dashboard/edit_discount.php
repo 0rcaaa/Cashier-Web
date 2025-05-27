@@ -7,10 +7,10 @@ if (isset($_SESSION['loggedIn']) == False) {
   exit();
 }
 
-if(isset($_SESSION['success'])) {
+if (isset($_SESSION['success'])) {
   echo "<script>alert('$_SESSION[success]');</script>";
   unset($_SESSION['success']);
-} else if(isset($_SESSION['err'])) {
+} else if (isset($_SESSION['err'])) {
   echo "<script>alert('$_SESSION[err]');</script>";
   unset($_SESSION['err']);
 }
@@ -97,8 +97,8 @@ if(isset($_SESSION['success'])) {
                         class=" w-full rounded border border-stroke bg-gray px-4.5 py-3 font-medium text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
                         name="title"
                         id="title"
-                        type="text" 
-                        placeholder="Title"/>
+                        type="text"
+                        placeholder="Title" />
                     </div>
 
                     <div class="mb-5.5 flex flex-col gap-5.5 sm:flex-row">
@@ -112,8 +112,8 @@ if(isset($_SESSION['success'])) {
                           name="PR"
                           inputmode="numeric"
                           pattern="\d*"
-                          id="pr" 
-                          placeholder="Points Required"/>
+                          id="pr"
+                          placeholder="Points Required" />
                       </div>
 
                       <div class="w-full sm:w-1/2">
@@ -127,8 +127,7 @@ if(isset($_SESSION['success'])) {
                           inputmode="decimal"
                           id="percentage"
                           max="100"
-                          placeholder="In percentage (0-100)"
-                           />
+                          placeholder="In percentage (0-100)" />
                       </div>
                     </div>
 
@@ -152,8 +151,8 @@ if(isset($_SESSION['success'])) {
                       </button>
                       <button
                         class="flex justify-center rounded bg-primary px-6 py-2 font-medium text-gray hover:bg-opacity-90"
-                        type="submit" value="upDiscount" name="action">
-                        Add 
+                        type="submit" value="upDiscount" name="submit">
+                        Add
                       </button>
                     </div>
                   </div>
@@ -170,8 +169,8 @@ if(isset($_SESSION['success'])) {
   </div>
   <!-- ===== Page Wrapper End ===== -->
   <script>
-    document.addEventListener('DOMContentLoaded', function(){
-      const url = `<?= base_url() ?>/service/api.php?action=getDiscountDetails&disId=<?=$_GET['discount']?>`;
+    document.addEventListener('DOMContentLoaded', function() {
+      const url = `<?= base_url() ?>/service/api.php?action=getDiscountDetails&disId=<?= $_GET['discount'] ?>`;
       fetch(url)
         .then(res => res.json())
         .then(data => {
@@ -182,6 +181,12 @@ if(isset($_SESSION['success'])) {
           }
           const dis = data[0];
 
+          originalData = {
+            title: dis.title || '',
+            pr: dis.points_required || '',
+            percentage: dis.percentage || '',
+            exp: dis.exp_at || '',
+          }
           // Isi form input
           document.getElementById('title').value = dis.title || '';
           document.getElementById('pr').value = dis.points_required || '';
@@ -211,21 +216,71 @@ if(isset($_SESSION['success'])) {
       });
     });
 
+
+    // Tangkap tombol submit (optional, kalau mau disable selama proses)
+    const submitButton = form.querySelector('button[type="submit"]'); 
+
     // Convert types before submission
     form.addEventListener("submit", function(e) {
+      e.preventDefault();
+
       const pr = document.querySelector("#pr");
       const percentage = document.querySelector("#percentage");
-
-      // Optional: check valid values
-      if (pr.value.trim() !== "") {
-        pr.value = parseInt(pr.value);
-      }
 
       if (percentage.value.trim() !== "") {
         let percentValue = parseFloat(percentage.value);
         if (percentValue > 100) percentValue = 100;
         percentage.value = percentValue;
       }
+
+      const updatedData = {
+        title: document.getElementById('title').value.trim(),
+        pr: pr.value = pr.value,
+        percentage: percentage.value,
+        exp: document.querySelector('input[name="exp"]').value
+      };
+      const isChanged = Object.keys(updatedData).some(key => updatedData[key] !== originalData[key]);
+      if (!isChanged) {
+        alert('No Changes Made');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('action', 'Discount');
+      formData.append('DisId', '<?= $_GET['discount'] ?>');
+      formData.append('title', updatedData.title);
+      formData.append('pr', updatedData.pr);
+      formData.append('percentage', updatedData.percentage);
+      formData.append('exp', updatedData.exp);
+
+      console.log(formData);
+      // Optional: Disable tombol biar ga double submit
+      submitButton.disabled = true;
+      submitButton.innerText = "Saving...";
+
+      // Kirim pakai Fetch
+      fetch('<?= base_url() ?>/service/edit.php', {
+          method: "POST",
+          body: formData
+        })
+        .then(response => response.json()) // Asumsikan response JSON (ubah kalau beda)
+        .then(response => {
+          // Response sukses
+          console.log(response.message);
+          // Contoh notifikasi
+          alert(response.message);
+          // Aktifkan tombol lagi
+          submitButton.disabled = false;
+          submitButton.innerText = "Save";
+        })
+        .catch(error => {
+          console.log(error);
+          alert("An error occurred while creating the account." + error.message);
+
+          // Aktifkan tombol lagi
+          submitButton.disabled = false;
+          submitButton.innerText = "Save";
+        });
     });
   </script>
   <script defer src="../../js/bundle.js"></script>

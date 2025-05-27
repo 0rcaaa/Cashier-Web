@@ -16,6 +16,7 @@ if (isset($_SESSION['loggedIn']) == False) {
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Edit Product</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" />
   <link href="../../assets/images/logo/logo_white.png" rel="icon">
   <link href="../../css/output.css" rel="stylesheet">
 </head>
@@ -309,7 +310,20 @@ if (isset($_SESSION['loggedIn']) == False) {
                 </div>
               </div>
             </form>
-            <!-- ====== Settings Section End -->
+            <!-- Settings Section End -->
+            <!-- Modal Crop -->
+            <div id="cropModal" class="hidden fixed inset-0 bg-gray-500/50 flex items-center justify-center z-100">
+              <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+                <h2 class="text-lg font-semibold mb-4">Crop Image</h2>
+                <div class="w-full h-64 overflow-hidden mb-4">
+                  <img id="cropImage" class="max-w-full max-h-full object-contain mx-auto" />
+                </div>
+                <div class="flex justify-end space-x-2">
+                  <button onclick="closeCropModal()" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">Cancel</button>
+                  <button onclick="cropImage()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Crop</button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </main>
@@ -319,15 +333,19 @@ if (isset($_SESSION['loggedIn']) == False) {
   </div>
   <!-- ===== Page Wrapper End ===== -->
   <script>
+    const form = document.querySelector("form");
+    const submitBTN = form.querySelector("button[type='submit']");
     document.addEventListener("DOMContentLoaded", function() {
       populateCategoryDropdown();
       setupImageUpload();
       populateBrandDropdown();
       getData();
 
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        onUpdate(<?= $_GET['product'] ?>);
+      })
     });
-
-
 
     function getData() {
       const url = '<?= base_url() ?>/service/api.php?action=getProductDetails&productId=<?= $_GET['product'] ?>';
@@ -341,6 +359,18 @@ if (isset($_SESSION['loggedIn']) == False) {
           }
           const product = data[0];
 
+          originalData = {
+            name: product.name || '',
+            stok: product.stock || '',
+            price: product.price || '',
+            uniqcode: product.uniqcode || '',
+            production_date: product.production_date || '',
+            expiration_date: product.expiration_date || '',
+            description: product.description || '',
+            brand_id: product.brand_id || '',
+            category_id: product.category_id || '',
+            image: product.image || ''
+          };
           // Isi form input
           document.getElementById('productName').value = product.name || '';
           document.getElementById('stock').value = product.stock || '';
@@ -349,12 +379,9 @@ if (isset($_SESSION['loggedIn']) == False) {
           document.querySelector('input[name="production"]').value = product.production_date || '';
           document.querySelector('input[name="exp"]').value = product.expiration_date || '';
           document.getElementById('detail').value = product.description || '';
-
           // Isi select brand dan kategori
           document.getElementById('brand').value = product.brand_id || '';
           document.getElementById('kategori').value = product.category_id || '';
-
-
           // Preview gambar
           if (product.image) {
             const imgPath = '<?= base_url() ?>/' + product.image;
@@ -362,16 +389,95 @@ if (isset($_SESSION['loggedIn']) == False) {
             document.getElementById('uploadedImg').classList.remove('hidden');
             document.getElementById('pImageTitles').classList.add('hidden');
           }
-
           // Trigger input event untuk uniqcode supaya barcode tergenerate
           const uniqInput = document.getElementById('uniqcode');
           uniqInput.dispatchEvent(new Event('input'));
-
         }).catch(err => {
           console.error("Fetch error:", err);
           alert("Terjadi kesalahan saat mengambil data produk.");
         });
     }
+    
+    function onUpdate(id) {
+      const updatedData = {
+          name:document.getElementById('productName').value.trim(),
+          stok:parseInt(document.getElementById('stock').value),
+          price:document.getElementById('price').value.trim(),
+          uniqcode:document.getElementById('uniqcode').value.trim(),
+          production_date:document.querySelector('input[name="production"]').value.trim(),
+          expiration_date:document.querySelector('input[name="exp"]').value.trim(),
+          description:document.getElementById('detail').value.trim(),
+          brand_id:parseInt(document.getElementById('brand').value),
+          category_id:parseInt(document.getElementById('kategori').value)
+      };
+
+      // Cek apakah data berbeda
+      const isChanged = Object.keys(updatedData).some(key => updatedData[key] !== originalData[key]);
+      // Cek perubahan gambar
+      const currentImageSrc = document.getElementById('previewImage').src;
+      const originalImageSrc = originalData.image ? '<?= base_url() ?>/' + originalData.image : '';
+      const isImageChanged = currentImageSrc !== originalImageSrc;
+
+      if (!isChanged && !isImageChanged) {
+        alert("Tidak ada perubahan data untuk disimpan.");
+        return;
+      }
+      const formData = new FormData();
+      formData.append('action', 'Product');
+      formData.append('productId', id);
+      formData.append('name', updatedData.name);
+      formData.append('description', updatedData.description);
+      formData.append('stok', parseInt(updatedData.stok));
+      formData.append('price', updatedData.price);
+      formData.append('uniqcode', updatedData.uniqcode);
+      formData.append('production_date', updatedData.production_date);
+      formData.append('expiration_date', updatedData.expiration_date);
+      formData.append('brand_id', parseInt(updatedData.brand_id));
+      formData.append('kategori_id', parseInt(updatedData.category_id));
+
+      if (isImageChanged) {
+        if (croppedImageBlob) {
+          formData.append('image', croppedImageBlob, 'cropped.png');
+        } else {
+          const fileInput = document.querySelector('#FileUpload input[type="file"]');
+          if (fileInput.files.length > 0) {
+            formData.append('image', fileInput.files[0]);
+          } else {
+            alert("Gambar berubah tapi tidak ada file baru. Masukkan gambar terlebih dahulu.");
+            return;
+          }
+        }
+      }
+
+      console.log(formData);
+      // Optional: Disable tombol biar ga double submit
+      submitBTN.disabled = true;
+      submitBTN.innerText = "Saving...";
+      // Kirim AJAX POST
+      fetch('<?= base_url() ?>/service/edit.php', {
+          method: 'POST',
+          body: formData
+        })
+        .then(res => res.json())
+        .then(response => {
+          if (response.success) {
+            // Contoh notifikasi
+            alert(response.message);
+          } else {
+            alert("Gagal memperbarui data: " + response.message);
+          }
+        })
+        .catch(err => {
+          console.error("Update error:", err);
+          alert("Terjadi kesalahan saat memperbarui data." + err.message);
+        })
+        .finally(() => {
+          // Aktifkan tombol lagi
+          submitBTN.disabled = false;
+          submitBTN.innerText = "Save";
+        });
+    }
+
 
     document.getElementById("uniqcode").addEventListener("input", function() {
       const code = this.value.trim();
@@ -392,8 +498,8 @@ if (isset($_SESSION['loggedIn']) == False) {
 
       fetch("<?= base_url() ?>/service/api.php?action=getCategory")
         .then(response => response.json())
-        .then(data => {
-          data.forEach(item => {
+        .then(json => {
+          json.data.forEach(item => {
             const option = document.createElement("option");
             option.value = item.id;
             option.textContent = item.name;
@@ -408,8 +514,8 @@ if (isset($_SESSION['loggedIn']) == False) {
 
       fetch("<?= base_url() ?>/service/api.php?action=getBrands")
         .then(response => response.json())
-        .then(data => {
-          data.forEach(item => {
+        .then(json => {
+          json.data.forEach(item => {
             const option = document.createElement("option");
             option.value = item.id;
             option.textContent = item.name;
@@ -417,7 +523,6 @@ if (isset($_SESSION['loggedIn']) == False) {
           });
         });
     }
-
 
     document.getElementById("price").addEventListener("input", function(event) {
       let inputValue = event.target.value.replace(/[^\d,]/g, ""); // Hanya angka dan koma
@@ -456,32 +561,58 @@ if (isset($_SESSION['loggedIn']) == False) {
       img.src = '';
       uploadedImg.classList.add('hidden');
       pImageTitles.style.display = 'flex';
+
+      croppedImageBlob = null; // Reset hasil crop
     }
 
+    let cropper;
 
     function setupImageUpload() {
-      const fileUpload = document.getElementById('FileUpload');
-      fileUpload.addEventListener('change', function() {
-        const file = this.querySelector('input[type="file"]').files[0];
-        const img = this.querySelector('#previewImage');
-        const pImageTitles = this.querySelector('#pImageTitles');
-        const uploadedImg = this.querySelector('#uploadedImg');
-
+      const fileInput = document.querySelector('#FileUpload input[type="file"]');
+      const cropImage = document.getElementById('cropImage');
+      fileInput.addEventListener('change', function() {
+        const file = this.files[0];
         if (file) {
-          const reader = new FileReader();
-          reader.onload = function(e) {
-            img.src = e.target.result;
-            uploadedImg.classList.remove('hidden');
-            uploadedImg.classList.add('flex');
-            pImageTitles.style.display = 'none';
-          }
-          reader.readAsDataURL(file);
+          const url = URL.createObjectURL(file);
+          cropImage.src = url;
+          document.getElementById('cropModal').style.display = 'flex';
+          cropImage.onload = () => {
+            if (cropper) cropper.destroy();
+            cropper = new Cropper(cropImage, {
+              aspectRatio: 1,
+              viewMode: 1
+            });
+          };
         }
       });
+    }
+
+    function cropImage() {
+      if (cropper) {
+        cropper.getCroppedCanvas({
+          width: 800,
+          height: 800
+        }).toBlob(blob => {
+          croppedImageBlob = blob;
+
+          const img = document.getElementById('previewImage');
+          img.src = URL.createObjectURL(blob);
+          document.getElementById('uploadedImg').classList.remove('hidden');
+          document.getElementById('pImageTitles').style.display = 'none';
+
+          closeCropModal();
+        });
+      }
+    }
+
+    function closeCropModal() {
+      document.getElementById('cropModal').style.display = 'none';
     }
   </script>
   <script defer src="../../js/bundle.js"></script>
   <script defer src="../../js/JsBarcode.all.min.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
 
 
 </body>
