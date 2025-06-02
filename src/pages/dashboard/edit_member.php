@@ -174,8 +174,9 @@ if (isset($_SESSION['loggedIn']) == False) {
   <!-- ===== Page Wrapper End ===== -->
   <script>
     document.addEventListener("DOMContentLoaded", function() {
-
       const url = `<?= base_url() ?>/service/api.php?action=getMemberDetails&memId=<?= $_GET['member'] ?>`;
+      let originalData = {};
+
       fetch(url)
         .then(res => res.json())
         .then(data => {
@@ -190,19 +191,17 @@ if (isset($_SESSION['loggedIn']) == False) {
             memberId: mem.id,
             name: mem.name || '',
             phone: mem.phone || '',
-            points: mem.points || '',
-          }
+            points: mem.points || ''
+          };
 
           // Isi form input
           document.getElementById('username').value = mem.name || '';
           document.getElementById('phone').value = mem.phone || '';
           document.getElementById('points').value = mem.points || '';
-
         }).catch(err => {
           console.error("Fetch error:", err);
           alert("Terjadi kesalahan saat mengambil data.");
         });
-
 
       document.querySelectorAll("#phone").forEach(input => {
         input.addEventListener("input", (e) => {
@@ -211,11 +210,8 @@ if (isset($_SESSION['loggedIn']) == False) {
       });
 
       const form = document.querySelector("form");
-
-      // Tangkap tombol submit (optional, kalau mau disable selama proses)
       const submitButton = form.querySelector('button[type="submit"]');
 
-      // Intercept submit form
       form.addEventListener("submit", function(e) {
         e.preventDefault(); // Hentikan form default submit
 
@@ -225,60 +221,59 @@ if (isset($_SESSION['loggedIn']) == False) {
           points: parseInt(document.getElementById('points').value)
         };
 
-        // Cek apakah data berbeda
-        const isChanged = Object.keys(updatedData).some(key => updatedData[key] !== originalData[key]);
         const pw = document.getElementById('password');
         const cPw = document.getElementById('cpass');
-
-        if (!isChanged && !pw.value) {
-          alert("Tidak ada perubahan data untuk disimpan.");
-          return;
-        }
+        // Buat FormData dan tambahkan hanya field yang berubah
         const formData = new FormData();
         formData.append('action', 'Member');
-        formData.append('memId', <?= $_GET['member']?>);
-        formData.append('name', updatedData.name);
-        formData.append('phone', updatedData.phone);
-        formData.append('points', updatedData.points);
+        formData.append('memId', <?= $_GET['member'] ?>);
 
-        if (pw.value !== cPw.value) {
+        let hasChanges = false;
+        Object.keys(updatedData).forEach(key => {
+          if (updatedData[key] !== originalData[key]) {
+            formData.append(key, updatedData[key]);
+            hasChanges = true;
+          }
+        });
+
+        // Jika password diisi dan valid, tambahkan
+         if (pw.value !== cPw.value) {
           alert("pw gk sama");
           return;
         } else if (pw.value === cPw.value && pw.value !== '') {
           formData.append('password', pw.value);
         }
 
-        console.log(formData);
-        // Optional: Disable tombol biar ga double submit
+        if (!hasChanges) {
+          alert("Tidak ada perubahan data untuk disimpan.");
+          return;
+        }
+
+        // Disable tombol
         submitButton.disabled = true;
         submitButton.innerText = "Saving...";
 
-        // Kirim pakai Fetch
         fetch('<?= base_url() ?>/service/edit.php', {
             method: "POST",
             body: formData
           })
-          .then(response => response.json()) // Asumsikan response JSON (ubah kalau beda)
+          .then(response => response.json())
           .then(response => {
-            // Response sukses
             console.log(response.message);
-            // Contoh notifikasi
             alert(response.message);
-            // Aktifkan tombol lagi
             submitButton.disabled = false;
             submitButton.innerText = "Save";
           })
           .catch(error => {
-            console.log( error);
-            alert("An error occurred while creating the account." + error.message);
-
-            // Aktifkan tombol lagi
+            console.error("Fetch error:", error);
+            alert("An error occurred while updating the member. " + error.message);
             submitButton.disabled = false;
             submitButton.innerText = "Save";
           });
       });
     });
   </script>
+
   <script defer src="../../js/bundle.js"></script>
 
 

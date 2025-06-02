@@ -239,19 +239,24 @@ if (isset($_SESSION['success'])) {
         percentage: percentage.value,
         exp: document.querySelector('input[name="exp"]').value
       };
-      const isChanged = Object.keys(updatedData).some(key => updatedData[key] !== originalData[key]);
-      if (!isChanged) {
-        alert('No Changes Made');
-        return;
-      }
 
       const formData = new FormData();
       formData.append('action', 'Discount');
       formData.append('DisId', '<?= $_GET['discount'] ?>');
-      formData.append('title', updatedData.title);
-      formData.append('pr', updatedData.pr);
-      formData.append('percentage', updatedData.percentage);
-      formData.append('exp', updatedData.exp);
+
+      let hasChanges = false;
+        Object.keys(updatedData).forEach(key => {
+          if (updatedData[key] !== originalData[key]) {
+            formData.append(key, updatedData[key]);
+            hasChanges = true;
+          }
+        });
+
+      if (!hasChanges) {
+        alert('No Changes Made');
+        return;
+      }
+
 
       console.log(formData);
       // Optional: Disable tombol biar ga double submit

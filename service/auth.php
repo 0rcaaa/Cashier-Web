@@ -48,11 +48,51 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         case 'newMember':
             new_member($conn);
             break;
+        case 'verifyMember':
+            verifyMember($conn);
+            break;
         default:
             header('location: ../src/pages/auth/index.php');
             exit;
     }
 }
+
+function verifyMember($conn) {
+    $data = json_decode(file_get_contents("php://input"), true);
+
+    $phone = $data['memberPhone'] ?? '';
+    $password = $data['password'] ?? '';
+
+    if (empty($phone) || empty($password)) {
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'message' => 'Phone number and password are required']);
+        exit;
+    }
+
+    $stmt = $conn->prepare("SELECT id, password FROM members WHERE phone = ? LIMIT 1");
+    $stmt->bind_param('s', $phone);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result && $result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        $hashedPassword = $row['password'];
+
+        if (password_verify($password, $hashedPassword)) {
+            // Password cocok
+            echo json_encode(['status' => 'success', 'message' => 'Verification successful']);
+        } else {
+            // Password salah
+            echo json_encode(['status' => 'error', 'message' => 'Incorrect password']);
+        }
+    } else {
+        // Nomor telepon tidak ditemukan
+        echo json_encode(['status' => 'error', 'message' => 'Phone number not found']);
+    }
+
+    $stmt->close();
+}
+
 
 function new_member($conn)
 {
@@ -246,7 +286,7 @@ function transaction($conn)
 
     if (!$data || !isset($data->order_id) || !isset($data->cash)) {
         http_response_code(400);
-        echo json_encode(['error' => 'Data tidak lengkap']);
+        echo json_encode(['status' => 'error', 'message' => 'Data tidak lengkap']);
         exit;
     }
 
@@ -263,7 +303,7 @@ function transaction($conn)
 
     if (!$order) {
         http_response_code(404);
-        echo json_encode(['error' => 'Order tidak ditemukan']);
+        echo json_encode(['status' => 'error', 'message' => 'Order tidak ditemukan']);
         exit;
     }
 
@@ -284,7 +324,24 @@ function transaction($conn)
     $exchange = 0;
     $discount_value = 0;
 
-    // Jika ada diskon
+    // Cek stok produk
+    $stmtCheckStock = $conn->prepare("
+        SELECT p.id, p.name, p.stock, od.qty
+        FROM order_details od
+        JOIN products p ON od.product_fid = p.id
+        WHERE od.order_fid = ?
+    ");
+    $stmtCheckStock->bind_param('i', $order_id);
+    $stmtCheckStock->execute();
+    $resultStock = $stmtCheckStock->get_result();
+    while ($row = $resultStock->fetch_assoc()) {
+        if ($row['stock'] < $row['qty']) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => "Stok produk '{$row['name']}' tidak mencukupi."]);
+            exit;
+        }
+    }
+
     if ($discount_id > 0) {
         $stmtDisc = $conn->prepare("SELECT percentage, points_required FROM discounts WHERE id = ? AND exp_at > NOW()");
         $stmtDisc->bind_param('i', $discount_id);
@@ -292,7 +349,8 @@ function transaction($conn)
         $discount = $stmtDisc->get_result()->fetch_assoc();
 
         if (!$discount) {
-            echo json_encode(['error' => 'Diskon tidak valid atau sudah kadaluarsa']);
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Diskon tidak valid atau sudah kadaluarsa']);
             exit;
         }
 
@@ -301,10 +359,8 @@ function transaction($conn)
         $exchange = $cash - $final_total;
         if ($exchange < 0) $exchange = 0;
 
-        // Mulai transaksi
         $conn->begin_transaction();
         try {
-            // Insert transaksi
             $stmt = $conn->prepare("
                 INSERT INTO transactions (order_fid, transaction_code, cash, exchange, discount_id)
                 VALUES (?, ?, ?, ?, ?)
@@ -313,32 +369,27 @@ function transaction($conn)
             $stmt->execute();
             $transaction_id = $stmt->insert_id;
 
-            // Kurangi poin member
             if ($member_id > 0) {
                 $stmt = $conn->prepare("UPDATE members SET points = points - ? WHERE id = ?");
                 $stmt->bind_param('ii', $discount['points_required'], $member_id);
                 $stmt->execute();
             }
 
-            // Update order & stock
             updateOrderAndStock($conn, $order_id);
-
             $conn->commit();
-            echo json_encode(['success' => 'Transaksi berhasil', 'transaction_id' => $transaction_id]);
+
+            echo json_encode(['status' => 'success', 'message' => 'Transaksi berhasil', 'transaction_id' => $transaction_id]);
         } catch (Exception $e) {
             $conn->rollback();
             http_response_code(500);
-            echo json_encode(['error' => 'Gagal memproses transaksi', 'message' => $e->getMessage()]);
+            echo json_encode(['status' => 'error', 'message' => 'Gagal memproses transaksi', 'error' => $e->getMessage()]);
         }
-    }
-    // Jika tanpa diskon
-    else {
+    } else {
         $exchange = $cash - $subtotal;
         if ($exchange < 0) $exchange = 0;
 
         $conn->begin_transaction();
         try {
-            // Insert transaksi
             $stmt = $conn->prepare("
                 INSERT INTO transactions (order_fid, transaction_code, cash, exchange)
                 VALUES (?, ?, ?, ?)
@@ -347,26 +398,25 @@ function transaction($conn)
             $stmt->execute();
             $transaction_id = $stmt->insert_id;
 
-            // Tambahkan poin jika ada member
             if ($member_id > 0) {
-                $points_earned = floor($subtotal / 10000); // Contoh: setiap 10.000 = 1 poin
+                $points_earned = floor($subtotal / 10000);
                 $stmt = $conn->prepare("UPDATE members SET points = points + ? WHERE id = ?");
                 $stmt->bind_param('ii', $points_earned, $member_id);
                 $stmt->execute();
             }
 
-            // Update order & stock
             updateOrderAndStock($conn, $order_id);
-
             $conn->commit();
-            echo json_encode(['success' => 'Transaksi berhasil', 'transaction_id' => $transaction_id]);
+
+            echo json_encode(['status' => 'success', 'message' => 'Transaksi berhasil', 'transaction_id' => $transaction_id]);
         } catch (Exception $e) {
             $conn->rollback();
             http_response_code(500);
-            echo json_encode(['error' => 'Gagal memproses transaksi', 'message' => $e->getMessage()]);
+            echo json_encode(['status' => 'error', 'message' => 'Gagal memproses transaksi', 'error' => $e->getMessage()]);
         }
     }
 }
+
 
 // Fungsi bantu update order dan stock
 function updateOrderAndStock($conn, $order_id)

@@ -129,7 +129,7 @@ function putMember($conn) {
         $stmt = $conn->prepare("SELECT id FROM members WHERE phone = ?");
         $stmt->execute([$phone]);
         if ($stmt->fetch()) {
-            echo json_encode(['success' => false, 'message' => 'Email sudah digunakan oleh akun lain.']);
+            echo json_encode(['success' => false, 'message' => 'No telephone sudah digunakan oleh akun lain.']);
             exit;
         }
         $fields[] = "phone = ?";

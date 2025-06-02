@@ -311,8 +311,12 @@ function format_rupiah($angka)
     })
     .then(response => response.json())
     .then(data => {
-      alert('Payment successful!');
-      window.location.href = `transaction_details.php?order=<?= $order_id ?>`;
+      if (data.status === 'success'){
+        alert(data.message);
+        window.location.href = `transaction_details.php?order=<?= $order_id ?>`;
+      } else if(data.status === 'error'){
+        alert(data.message)
+      }
     })
     .catch(error => {
       console.error('Error:', error);

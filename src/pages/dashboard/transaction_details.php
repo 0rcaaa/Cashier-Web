@@ -185,7 +185,7 @@ if (isset($_SESSION['success'])) {
                                             <p class="text-center text-xs text-gray-500">Terima kasih telah berbelanja di 0rca Store!</p>
                                         </div>
                                     </div>
-                                    <button onclick="export_to_pdf()" class="flex mt-3 w-full items-center justify-center rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white hover:bg-meta-4 focus:outline-none focus:ring-4  focus:ring-primary-300 cursor-pointer">Proses Transaksi</button>
+                                    <button onclick="export_to_pdf()" class="flex mt-3 w-full items-center justify-center rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white hover:bg-meta-4 focus:outline-none focus:ring-4  focus:ring-primary-300 cursor-pointer">Create Invoice</button>
                                 </div>
 
                             </div>

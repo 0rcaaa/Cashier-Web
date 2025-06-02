@@ -322,8 +322,17 @@ if (isset($_SESSION['loggedIn']) == False) {
         role: document.getElementById('role').value.trim()
       };
 
+      const formData = new FormData();
+      formData.append('action', 'Account');
+      formData.append('accId', id);
       // Cek apakah data berbeda
-      const isChanged = Object.keys(updatedData).some(key => updatedData[key] !== originalData[key]);
+      let hasChanges = false;
+        Object.keys(updatedData).forEach(key => {
+          if (updatedData[key] !== originalData[key]) {
+            formData.append(key, updatedData[key]);
+            hasChanges = true;
+          }
+        });
       const pw = document.getElementById('password');
       const cPw = document.getElementById('cpassword');
 
@@ -332,16 +341,10 @@ if (isset($_SESSION['loggedIn']) == False) {
       const originalImageSrc = originalData.image ? '<?= base_url() ?>/' + originalData.image : '';
       const isImageChanged = currentImageSrc !== originalImageSrc;
 
-      if (!isChanged && !isImageChanged && !pw.value) {
+      if (!hasChanges && !isImageChanged && !pw.value) {
         alert("Tidak ada perubahan data untuk disimpan.");
         return;
       }
-      const formData = new FormData();
-      formData.append('action', 'Account');
-      formData.append('accId', id);
-      formData.append('username', updatedData.username);
-      formData.append('email', updatedData.email);
-      formData.append('role', updatedData.role);
 
       if (isImageChanged) {
         if (croppedImageBlob) {

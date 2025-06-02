@@ -410,30 +410,26 @@ if (isset($_SESSION['loggedIn']) == False) {
           brand_id:parseInt(document.getElementById('brand').value),
           category_id:parseInt(document.getElementById('kategori').value)
       };
+      const formData = new FormData();
+      formData.append('action', 'Product');
+      formData.append('productId', id);
 
-      // Cek apakah data berbeda
-      const isChanged = Object.keys(updatedData).some(key => updatedData[key] !== originalData[key]);
+      let hasChanges = false;
+        Object.keys(updatedData).forEach(key => {
+          if (updatedData[key] !== originalData[key]) {
+            formData.append(key, updatedData[key]);
+            hasChanges = true;
+          }
+        });
       // Cek perubahan gambar
       const currentImageSrc = document.getElementById('previewImage').src;
       const originalImageSrc = originalData.image ? '<?= base_url() ?>/' + originalData.image : '';
       const isImageChanged = currentImageSrc !== originalImageSrc;
 
-      if (!isChanged && !isImageChanged) {
+      if (!hasChanges && !isImageChanged) {
         alert("Tidak ada perubahan data untuk disimpan.");
         return;
       }
-      const formData = new FormData();
-      formData.append('action', 'Product');
-      formData.append('productId', id);
-      formData.append('name', updatedData.name);
-      formData.append('description', updatedData.description);
-      formData.append('stok', parseInt(updatedData.stok));
-      formData.append('price', updatedData.price);
-      formData.append('uniqcode', updatedData.uniqcode);
-      formData.append('production_date', updatedData.production_date);
-      formData.append('expiration_date', updatedData.expiration_date);
-      formData.append('brand_id', parseInt(updatedData.brand_id));
-      formData.append('kategori_id', parseInt(updatedData.category_id));
 
       if (isImageChanged) {
         if (croppedImageBlob) {
