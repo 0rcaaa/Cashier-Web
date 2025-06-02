@@ -128,7 +128,7 @@ if (isset($_SESSION['success'])) {
                                     </dl>
 
                                     <div class="border-y border-lg  border-white border-dashed"></div>
-                                    
+
                                     <dl class="flex items-center justify-between gap-4 py-3">
                                         <dt class="text-base font-normal text-gray-500 dark:text-gray-400">Cash</dt>
                                         <dd class="text-base font-medium text-gray-900 dark:text-white">IDR. <span id="cash">---</span></dd>
@@ -186,8 +186,8 @@ if (isset($_SESSION['success'])) {
                                         </div>
                                     </div>
                                     <button onclick="export_to_pdf()" class="flex mt-3 w-full items-center justify-center rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white hover:bg-meta-4 focus:outline-none focus:ring-4  focus:ring-primary-300 cursor-pointer">Create Invoice</button>
+                                    <button onclick="send_wa()" class="flex mt-3 w-full items-center justify-center rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white hover:bg-meta-4 focus:outline-none focus:ring-4  focus:ring-primary-300 cursor-pointer">Send To Member</button>
                                 </div>
-
                             </div>
                         </div>
                     </div>
@@ -202,73 +202,71 @@ if (isset($_SESSION['success'])) {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
     <script>
-    document.addEventListener('DOMContentLoaded', get_records);
+        document.addEventListener('DOMContentLoaded', get_records);
 
-    const rupiah = num =>  parseInt(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        const rupiah = num => parseInt(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
-    function get_records() {
-        const url = `<?= base_url() ?>/service/api.php?action=get_inv&order=<?= $_GET['order'] ?>`;
+        let invoiceData = null; // Simpan data invoice untuk WhatsApp
 
-        fetch(url)
-            .then(res => res.json())
-            .then(data => {
-                if (!Array.isArray(data) || data.length === 0) {
-                alert("Transaksi belum dilakukan");
-                window.location.href = "<?= base_url() ?>/src/pages/dashboard/confirm_transaction.php?order_id=<?= $_GET['order'] ?>";
-                return;
-            }
+        function get_records() {
+            const url = `<?= base_url() ?>/service/api.php?action=get_inv&order=<?= $_GET['order'] ?>`;
 
-                const d = data[0];
-                const row = document.getElementById('cartItems');
-                const cart = document.getElementById('cartData');
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    if (!Array.isArray(data) || data.length === 0) {
+                        alert("Transaksi belum dilakukan");
+                        window.location.href = "<?= base_url() ?>/src/pages/dashboard/confirm_transaction.php?order_id=<?= $_GET['order'] ?>";
+                        return;
+                    }
 
-                // Set basic info
-                document.getElementById('noInv').textContent = d.noInv;
-                document.getElementById('date').textContent = new Date(d.date).toLocaleString('id-ID', {
-                    dateStyle: 'short',
-                    timeStyle: 'short'
-                });
+                    invoiceData = data; // Simpan untuk digunakan di send_wa()
+                    const d = data[0];
+                    const row = document.getElementById('cartItems');
+                    const cart = document.getElementById('cartData');
 
-                // Calculate summary
-                const totalQty = data.reduce((sum, i) => sum + parseInt(i.qty), 0);
-                const totalHarga = parseInt(d.total_price);
-                const discountValue = d.discount_value ? parseInt(d.discount_value) : 0;
-                const saved = (discountValue/100)*totalHarga;
-                const afterDiscount = totalHarga - saved;
-                const kembalian = parseInt(d.cash) - afterDiscount;
+                    document.getElementById('noInv').textContent = d.noInv;
+                    document.getElementById('date').textContent = new Date(d.date).toLocaleString('id-ID', {
+                        dateStyle: 'short',
+                        timeStyle: 'short'
+                    });
 
-                // Fill summary & invoice
-                [
-                    ['sumTotal', totalHarga],
-                    ['sumItems', totalQty],
-                    ['saved', saved],
-                    ['discountInv', saved],
-                    ['subTotal', afterDiscount],
-                    ['cash', parseInt(d.cash)],
-                    ['cashInv', parseInt(d.cash)],
-                    ['exchange', kembalian],
-                    ['exchangeInv', kembalian],
+                    const totalQty = data.reduce((sum, i) => sum + parseInt(i.qty), 0);
+                    const totalHarga = parseInt(d.total_price);
+                    const discountValue = d.discount_value ? parseInt(d.discount_value) : 0;
+                    const saved = (discountValue / 100) * totalHarga;
+                    const afterDiscount = totalHarga - saved;
+                    const kembalian = parseInt(d.cash) - afterDiscount;
 
-                    ['subtotal', totalHarga],
-                    ['qty', totalQty],
-                    ['Total', afterDiscount],
-                    ['exchange', kembalian]
-                ].forEach(([id, val]) => {
-                    const el = document.getElementById(id);
-                    if (el) el.textContent = rupiah(val);
-                });
+                    [
+                        ['sumTotal', totalHarga],
+                        ['sumItems', totalQty],
+                        ['saved', saved],
+                        ['discountInv', saved],
+                        ['subTotal', afterDiscount],
+                        ['cash', parseInt(d.cash)],
+                        ['cashInv', parseInt(d.cash)],
+                        ['exchange', kembalian],
+                        ['exchangeInv', kembalian],
+                        ['subtotal', totalHarga],
+                        ['qty', totalQty],
+                        ['Total', afterDiscount],
+                        ['exchange', kembalian]
+                    ].forEach(([id, val]) => {
+                        const el = document.getElementById(id);
+                        if (el) el.textContent = rupiah(val);
+                    });
 
-                const member = document.getElementById('memberName');
-                if (d.nama_pelanggan && d.nama_pelanggan !== 'default') {
-                    member.innerHTML = `Member: <span class="font-semibold">${d.nama_pelanggan}</span>`;
-                    document.getElementById('member').textContent = d.nama_pelanggan;
-                } else {
-                    member.innerHTML = '';
-                    document.getElementById('member').textContent = '-';
-                }
+                    const member = document.getElementById('memberName');
+                    if (d.nama_pelanggan && d.nama_pelanggan !== 'default') {
+                        member.innerHTML = `Member: <span class="font-semibold">${d.nama_pelanggan}</span>`;
+                        document.getElementById('member').textContent = d.nama_pelanggan;
+                    } else {
+                        member.innerHTML = '';
+                        document.getElementById('member').textContent = '-';
+                    }
 
-                // Render item list for both table and invoice
-                const itemRows = data.map(i => `
+                    const itemRows = data.map(i => `
                     <tr class="text-center">
                         <td class="p-2">${i.product_name}</td>
                         <td>${rupiah(i.price)}</td>
@@ -276,40 +274,70 @@ if (isset($_SESSION['success'])) {
                         <td>${rupiah(i.subPrice)}</td>
                     </tr>
                 `).join('');
-
-                const invoiceRows = data.map(i => `
+                    const invoiceRows = data.map(i => `
                     <tr>
                         <td>${i.product_name}</td>
                         <td class="text-center">${i.qty}</td>
                         <td class="text-right">${rupiah(i.subPrice)}</td>
                     </tr>
                 `).join('');
+                    cart.innerHTML = itemRows;
+                    row.innerHTML = invoiceRows;
+                })
+                .catch(err => console.error('Gagal mengambil data:', err));
+        }
 
-                cart.innerHTML = itemRows;
-                row.innerHTML = invoiceRows;
-            })
-            .catch(err => console.error('Gagal mengambil data:', err));
-    }
+        function export_to_pdf() {
+            html2pdf().set({
+                margin: 0.5,
+                filename: 'struk-' + document.getElementById('noInv').textContent + '.pdf',
+                image: {
+                    type: 'jpeg',
+                    quality: 0.98
+                },
+                html2canvas: {
+                    scale: 2
+                },
+                jsPDF: {
+                    unit: 'in',
+                    format: 'A4',
+                    orientation: 'portrait'
+                }
+            }).from(document.getElementById('wrapper')).save();
+        }
 
-    function export_to_pdf() {
-        html2pdf().set({
-            margin: 0.5,
-            filename: 'struk-' + document.getElementById('noInv').textContent + '.pdf',
-            image: {
-                type: 'jpeg',
-                quality: 0.98
-            },
-            html2canvas: {
-                scale: 2
-            },
-            jsPDF: {
-                unit: 'in',
-                format: 'A4',
-                orientation: 'portrait'
+        function send_wa() {
+            if (!invoiceData) {
+                alert("Data invoice belum siap. Silakan tunggu...");
+                return;
             }
-        }).from(document.getElementById('wrapper')).save();
-    }
-</script>
+            const d = invoiceData[0];
+            const items = invoiceData.map(i => `- ${i.product_name} (${i.qty} x Rp${rupiah(i.price)})`).join('\n');
+            const nomor = d.customer_phone ?? '628123456789'; // Default atau dari API
+            const totalHarga = parseInt(d.total_price);
+            const discountValue = d.discount_value ? parseInt(d.discount_value) : 0;
+            const saved = (discountValue / 100) * totalHarga;
+            const afterDiscount = totalHarga - saved;
+            const kembalian = parseInt(d.cash) - afterDiscount;
+
+            const pesan = `Apotek Sehat Sentosa\n` +
+                `No Struk: ${d.noInv}\n` +
+                `Tanggal: ${new Date(d.date).toLocaleString('id-ID')}\n` +
+                `Kasir: <?= $_SESSION['name'] ?>\n` +
+                `Pelanggan: ${d.nama_pelanggan ?? '-'}\n\n` +
+                `Items:\n${items}\n\n` +
+                `Total: Rp${rupiah(d.total_price)}\n` +
+                `Diskon : Rp${rupiah(saved)}\n` +
+                `Cash: Rp${rupiah(d.cash)}\n` +
+                `Kembalian: Rp${rupiah(kembalian)}\n` +
+                `\nTerima kasih telah berbelanja! 😊`;
+
+            console.log(pesan, nomor);
+            const waLink = `https://wa.me/${nomor}?text=${encodeURIComponent(pesan)}`;
+            window.open(waLink, '_blank');
+        }
+    </script>
+
 
 
 </body>

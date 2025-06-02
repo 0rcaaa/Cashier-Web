@@ -425,6 +425,7 @@ function getInv($conn)
     o.total_items,
     o.total_price,
     COALESCE(m.name, 'default') AS nama_pelanggan,
+    m.phone AS customer_phone,
     d.title,
     d.percentage AS discount_value,
     p.name AS product_name,
