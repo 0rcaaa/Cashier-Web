@@ -216,7 +216,9 @@ if (!isset($_SESSION['loggedIn'])) {
                   <td class="text-center px-4 py-2">Rp ${formatRupiah(item.product_price)}</td>
                   <td class="text-center px-4 py-2">${item.total_sold}</td>
                   <td class="text-center px-4 py-2">Rp ${formatRupiah(item.profit)}</td>
-                  <td class="text-center px-4 py-2"><button onclick="document.location='edit_product.php?product=${item.product_id}'" class="bg-primary text-white px-3 py-1 rounded">Edit</button></td>
+                  <td class="text-center px-4 py-2"><button onclick="document.location='edit_product.php?product=${item.product_id}'" class="bg-primary text-white px-3 py-1 rounded">Edit</button>
+                  <button onclick="if(confirm('Yakin?')) location.href='<?=base_url()?>/service/delete.php?type=products&id=${item.product_id}'" class="bg-red-500 text-white px-3 py-1 rounded">Delete</button>
+                  </td>
               </tr>
           `);
       });

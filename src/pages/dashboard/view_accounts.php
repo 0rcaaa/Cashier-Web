@@ -188,7 +188,9 @@ if (!isset($_SESSION['loggedIn'])) {
                   <td class="text-center px-4 py-2">${item.Role}</td>
                   <td class="text-center px-4 py-2">${item.Created_at}</td>
                   <td class="text-center px-4 py-2">${item.Updated_at}</td>
-                  <td class="text-center px-4 py-2"><button onclick="document.location='edit_account.php?account=${item.id}'" class="bg-primary text-white px-3 py-1 rounded">Edit</button></td>
+                  <td class="text-center px-4 py-2"><button onclick="document.location='edit_account.php?account=${item.id}'" class="bg-primary text-white px-3 py-1 rounded">Edit</button>
+                  <button onclick="if(confirm('Yakin?')) location.href='<?=base_url()?>/service/delete.php?type=admin&id=${item.id}'" class="bg-red-500 text-white px-3 py-1 rounded">Delete</button>
+                  </td>
               </tr>
           `);
         

@@ -2,6 +2,7 @@
 session_start();
 include("utility.php");
 include("connection.php");
+include('./sendToken.php');
 
 ini_set('display_errors', '1');
 ini_set('display_startup_errors', '1');
@@ -26,6 +27,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             break;
         case 'verify':
             verify($conn);
+            break;
+        case 'token_verify':
+            verify_token($conn);
+            break;
+        case 'NPW':
+            new_password($conn);
             break;
         case 'order':
             order($conn);
@@ -57,7 +64,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 
-function verifyMember($conn) {
+function verifyMember($conn)
+{
     $data = json_decode(file_get_contents("php://input"), true);
 
     $phone = $data['memberPhone'] ?? '';
@@ -500,8 +508,8 @@ function order($conn)
 
 function verify($conn)
 {
-    session_start();
-    $email = $_POST['email'];
+    $data = json_decode(file_get_contents("php://input"), true);
+    $email = $data['email'];
 
     $stmt = $conn->prepare("SELECT * FROM admin WHERE email =? LIMIT 1");
     $stmt->bind_param('s', $email);
@@ -520,14 +528,91 @@ function verify($conn)
         $stmt = $conn->prepare("INSERT INTO verify_tokens (fid_acc, token, exp_at) VALUES (?, ?, NOW() + INTERVAL 1 HOUR)");
         $stmt->bind_param('is', $idAcc, $token);
         if ($stmt->execute()) {
-            header('location: sendToken.php?email=' . $email . '&token=' . $token);
+            if (sendTokenEmail($email, $token)) {
+                echo json_encode(['status' => 'success', 'message' => 'Kode verifikasi telah dikirim ke email Anda']);
+            } else {
+                echo json_encode(['status' => 'error', 'message' => 'Gagal mengirim email']);
+            }
             exit();
         } else {
-            echo "Gagal mengirim token verifikasi";
+            echo json_encode(['status' => 'error', 'message' => 'gagal melakukan verifikasi']);
             exit();
         }
     } else {
-        echo 'email g ada';
+        echo json_encode(['status' => 'error', 'message' => 'email tidak terdaftar']);
+    }
+}
+
+function verify_token($conn)
+{
+    $data = json_decode(file_get_contents("php://input"), true);
+    $email = $data['email'];
+    $token = $data['token'];
+
+    // Ambil ID akun berdasarkan email
+    $stmt = $conn->prepare("SELECT id FROM admin WHERE email = ? LIMIT 1");
+    $stmt->bind_param('s', $email);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows === 0) {
+        echo json_encode(['status' => 'error', 'message' => 'Email tidak ditemukan']);
+        exit();
+    }
+
+    $idAcc = $result->fetch_assoc()['id'];
+
+    // Cek token masih berlaku
+    $stmt = $conn->prepare("SELECT * FROM verify_tokens WHERE fid_acc = ? AND token = ? AND exp_at > NOW() LIMIT 1");
+    $stmt->bind_param('is', $idAcc, $token);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows === 0) {
+        echo json_encode(['status' => 'error', 'message' => 'Token tidak valid atau sudah kedaluwarsa']);
+        exit();
+    }
+
+    // (Opsional) Tandai akun terverifikasi atau hapus token
+    $stmt = $conn->prepare("DELETE FROM verify_tokens WHERE fid_acc = ?");
+    $stmt->bind_param('i', $idAcc);
+    $stmt->execute();
+
+    $_SESSION['verified'] = true; // Tandai sesi terverifikasi
+    echo json_encode(['status' => 'success', 'message' => 'Verifikasi berhasil']);
+}
+
+function new_password($conn)
+{
+    $data = json_decode(file_get_contents("php://input"), true);
+    $email = $data['email'];
+    $newPassword = $data['password'];
+
+    // Validasi input dasar
+    if (empty($email) || empty($newPassword)) {
+        echo json_encode(['status' => 'error', 'message' => 'Email dan password baru wajib diisi']);
+        exit();
+    }
+
+    // Pastikan pengguna sudah terverifikasi sebelumnya
+    if (!isset($_SESSION['verified']) || $_SESSION['verified'] !== true) {
+        echo json_encode(['status' => 'error', 'message' => 'Akses tidak diizinkan. Verifikasi token terlebih dahulu.']);
+        exit();
+    }
+
+    // Hash password baru
+    $hashedPassword = password_hash($newPassword, PASSWORD_BCRYPT);
+
+    // Update password di tabel admin
+    $stmt = $conn->prepare("UPDATE admin SET password = ?, updated_at = NOW() WHERE email = ?");
+    $stmt->bind_param('ss', $hashedPassword, $email);
+
+    if ($stmt->execute()) {
+        // Bersihkan sesi verifikasi                                                                                                                                            mmmmmmmmmmmmmj
+        unset($_SESSION['verified']);
+        echo json_encode(['status' => 'success', 'message' => 'Password berhasil diperbarui']);
+    } else {
+        echo json_encode(['status' => 'error', 'message' => 'Gagal memperbarui password']);
     }
 }
 
@@ -572,7 +657,7 @@ function login($conn)
         $stmt->execute();
         $result = $stmt->get_result();
 
-        if ($result->num_rows > 0) { 
+        if ($result->num_rows > 0) {
             $row = $result->fetch_assoc();
             $_SESSION['name'] = $row['username'];
             $_SESSION['email'] = $row['email'];

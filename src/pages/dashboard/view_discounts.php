@@ -79,14 +79,14 @@ if (!isset($_SESSION['loggedIn'])) {
                   <div class="flex items-end gap-2">
                     <div class="flex flex-col">
                       <label for="search">Search Discount</label>
-                      <input name="search "type="text" id="search" placeholder="Search Title" class="border rounded p-2" />
+                      <input name="search " type="text" id="search" placeholder="Search Title" class="border rounded p-2" />
                     </div>
                     <button onclick="search()" class="bg-primary text-white px-4 py-2 rounded">Search</button>
                   </div>
 
                   <!-- Filters -->
                   <div class="flex flex-wrap items-end gap-4">
-                    
+
 
                     <div class="flex flex-col">
                       <label for="filter_status">Filter Status</label>
@@ -158,23 +158,23 @@ if (!isset($_SESSION['loggedIn'])) {
   <!-- ===== Page Wrapper End ===== -->
   <script defer src="../../js/bundle.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', function(){
+    document.addEventListener('DOMContentLoaded', function() {
       dataTable();
     });
     //fetch data from api
-        function fetchData(params = {}){
+    function fetchData(params = {}) {
       const query = new URLSearchParams(params).toString();
-      return fetch(`<?= base_url()?>/service/api.php?action=getDiscounts&${query}`)
-        .then(response =>{
-          if (!response.ok){
+      return fetch(`<?= base_url() ?>/service/api.php?action=getDiscounts&${query}`)
+        .then(response => {
+          if (!response.ok) {
             throw new Error('Network response was not daijoubu');
           }
           return response.json();
         })
     }
     //ambil data
-    function dataTable(filters = {}, page = 1){
-      const params ={
+    function dataTable(filters = {}, page = 1) {
+      const params = {
         ...filters,
         page,
         limit: 3
@@ -182,14 +182,14 @@ if (!isset($_SESSION['loggedIn'])) {
       fetchData(params)
         .then(response => {
           renderTable(response.data);
-          renderPagination(response.current_page, response.total_pages, newPage =>{
+          renderPagination(response.current_page, response.total_pages, newPage => {
             dataTable(filters, newPage);
           });
         })
-        .catch(error=> console.error('Error fetching data:', error));
+        .catch(error => console.error('Error fetching data:', error));
     }
     //buat record table
-    function renderTable(data){
+    function renderTable(data) {
       const TB = document.getElementById('tb');
       TB.innerHTML = '';
       data.forEach(item => {
@@ -201,20 +201,22 @@ if (!isset($_SESSION['loggedIn'])) {
                   <td class="text-center px-4 py-2">${item.CAT}</td>
                   <td class="text-center px-4 py-2">${item.Exp}</td>
                   <td class="text-center px-4 py-2">${item.Used}</td>
-                  <td class="text-center px-4 py-2"><button onclick="document.location='edit_discount.php?discount=${item.id}'" class="bg-primary text-white px-3 py-1 rounded">Edit</button></td>
+                  <td class="text-center px-4 py-2"><button onclick="document.location='edit_discount.php?discount=${item.id}'" class="bg-primary text-white px-3 py-1 rounded">Edit</button>
+                  <button onclick="if(confirm('Yakin?')) location.href='<?=base_url()?>/service/delete.php?type=discounts&id=${item.id}'" class="bg-red-500 text-white px-3 py-1 rounded">Delete</button>
+                  </td>
               </tr>
           `);
-        
+
       });
     }
     //buat pagination
-    function renderPagination(currentPage, totalPages, onChangePage){
+    function renderPagination(currentPage, totalPages, onChangePage) {
       const pagination = document.getElementById('pagination');
       pagination.innerHTML = '';
 
-      if(totalPages <= 1)return;
+      if (totalPages <= 1) return;
 
-       const createButton = (label, page, disabled = false, active = false) => {
+      const createButton = (label, page, disabled = false, active = false) => {
         const btn = document.createElement('button');
         btn.textContent = label;
         btn.className = `px-3 py-1 mx-1 rounded border 
@@ -240,25 +242,27 @@ if (!isset($_SESSION['loggedIn'])) {
       return document.getElementById(id).value;
     }
     // searcg function
-    function search(){
+    function search() {
       const keyword = getValue('search').trim();
-      dataTable({search:keyword},1);
+      dataTable({
+        search: keyword
+      }, 1);
     }
     //apply filter
-    function applyFilter(){
+    function applyFilter() {
       const filters = {
         status: getValue('filter_status'),
-        min:getValue('minPoints'),
-        max:getValue('maxPoints')
+        min: getValue('minPoints'),
+        max: getValue('maxPoints')
       }
-       dataTable(cleanObject(filters), 1);
+      dataTable(cleanObject(filters), 1);
     }
     //reset filter
-    function resetFilter(){
-      ['filter_status','minPoints','maxPoints'].forEach(id=>{
-        document.getElementById(id).value ='';
+    function resetFilter() {
+      ['filter_status', 'minPoints', 'maxPoints'].forEach(id => {
+        document.getElementById(id).value = '';
       })
-      dataTable({},1);
+      dataTable({}, 1);
     }
     // Helper clean params (buang null/empty)
     function cleanObject(obj) {
