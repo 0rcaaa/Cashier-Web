@@ -186,7 +186,7 @@ if (isset($_SESSION['success'])) {
                                         </div>
                                     </div>
                                     <button onclick="export_to_pdf()" class="flex mt-3 w-full items-center justify-center rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white hover:bg-meta-4 focus:outline-none focus:ring-4  focus:ring-primary-300 cursor-pointer">Create Invoice</button>
-                                    <!-- <button onclick="send_wa()" class="flex mt-3 w-full items-center justify-center rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white hover:bg-meta-4 focus:outline-none focus:ring-4  focus:ring-primary-300 cursor-pointer">Send To Member</button> -->
+                                    <button onclick="send_wa()" class="flex mt-3 w-full items-center justify-center rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white hover:bg-meta-4 focus:outline-none focus:ring-4  focus:ring-primary-300 cursor-pointer">Send To Member</button>
                                 </div>
                             </div>
                         </div>
@@ -311,30 +311,56 @@ if (isset($_SESSION['success'])) {
                 alert("Data invoice belum siap. Silakan tunggu...");
                 return;
             }
+
             const d = invoiceData[0];
             const items = invoiceData.map(i => `- ${i.product_name} (${i.qty} x Rp${rupiah(i.price)})`).join('\n');
-            const nomor = d.customer_phone ?? '628123456789'; // Default atau dari API
+            const nomor = d.customer_phone ?? '628123456789'; // Pastikan format 62xxx
             const totalHarga = parseInt(d.total_price);
             const discountValue = d.discount_value ? parseInt(d.discount_value) : 0;
             const saved = (discountValue / 100) * totalHarga;
             const afterDiscount = totalHarga - saved;
             const kembalian = parseInt(d.cash) - afterDiscount;
 
-            const pesan = `Apotek Sehat Sentosa\n` +
+            const pesan = `🧾 *Apotek Sehat Sentosa*\n` +
                 `No Struk: ${d.noInv}\n` +
                 `Tanggal: ${new Date(d.date).toLocaleString('id-ID')}\n` +
                 `Kasir: <?= $_SESSION['name'] ?>\n` +
                 `Pelanggan: ${d.nama_pelanggan ?? '-'}\n\n` +
-                `Items:\n${items}\n\n` +
-                `Total: Rp${rupiah(d.total_price)}\n` +
-                `Diskon : Rp${rupiah(saved)}\n` +
-                `Cash: Rp${rupiah(d.cash)}\n` +
-                `Kembalian: Rp${rupiah(kembalian)}\n` +
-                `\nTerima kasih telah berbelanja! 😊`;
+                `📦 *Items:*\n${items}\n\n` +
+                `💰 Total: Rp${rupiah(totalHarga)}\n` +
+                `🎁 Diskon: Rp${rupiah(saved)}\n` +
+                `🪙 Cash: Rp${rupiah(d.cash)}\n` +
+                `💵 Kembalian: Rp${rupiah(kembalian)}\n\n` +
+                `Terima kasih telah berbelanja! 😊`;
 
-            console.log(pesan, nomor);
-            const waLink = `https://wa.me/${nomor}?text=${encodeURIComponent(pesan)}`;
-            window.open(waLink, '_blank');
+                console. log(JSON.stringify({
+                        target: nomor,
+                        message: pesan
+                    }));
+
+            // Kirim ke API PHP menggunakan fetch
+            fetch('<?= base_url() ?>/service/send_wa.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        target: nomor,
+                        message: pesan
+                    })
+                })
+                .then(res => res.json())
+                .then(res => {
+                    if (res.status === 'success') {
+                        alert('Invoice berhasil dikirim ke WhatsApp!');
+                    } else {
+                        alert('Gagal mengirim invoice: ' + res.message);
+                    }
+                })
+                .catch(err => {
+                    console.error('Error kirim WA:', err);
+                    alert('Terjadi kesalahan saat mengirim pesan WA.');
+                });
         }
     </script>
 
