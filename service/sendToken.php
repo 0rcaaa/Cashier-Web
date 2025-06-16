@@ -16,7 +16,7 @@ function sendTokenEmail($email, $token)
         $mail->Username = '51709648475756'; // Ganti dengan email pengirim
         $mail->Password = '91284f950cf613'; // Ganti dengan password email pengirim
         $mail->SMTPSecure = 'tls';
-        $mail->Port = 2525;
+        $mail->Port = 587;
 
         // Pengaturan email
         $mail->setFrom('andika.syarrell6@smk.belajar.id', 'Kasir Digital');

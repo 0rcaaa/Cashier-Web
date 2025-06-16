@@ -66,7 +66,8 @@ switch ($action) {
 }
 
 // ====================== FUNCTION FETCH DATA ======================
-function getMD($conn){
+function getMD($conn)
+{
     $stmt = $conn->prepare('SELECT * FROM members WHERE id = ? ');
     $stmt->bind_param('i', $_GET['memId']);
     $stmt->execute();
@@ -78,7 +79,8 @@ function getMD($conn){
         echo json_encode(['error' => 'gagal mendapatkan data']);
     }
 }
-function getAccD($conn){
+function getAccD($conn)
+{
     $stmt = $conn->prepare('SELECT * FROM admin WHERE id = ? ');
     $stmt->bind_param('i', $_GET['accId']);
     $stmt->execute();
@@ -90,7 +92,8 @@ function getAccD($conn){
         echo json_encode(['error' => 'gagal mendapatkan data']);
     }
 }
-function getDD($conn){
+function getDD($conn)
+{
     $stmt = $conn->prepare('SELECT * FROM discounts WHERE id = ? ');
     $stmt->bind_param('i', $_GET['disId']);
     $stmt->execute();
@@ -456,16 +459,16 @@ function dashboardData($conn)
 
     // Ambil data total transaksi hari ini
     $stmt = $conn->prepare("SELECT
-                    DATE(NOW()) AS tanggal,
-                    COUNT(DISTINCT t.id) AS total_transaksi_today,
-                    COALESCE(SUM(td.quantity * (p.price + (p.price * p.margin / 100))), 0) AS total_penjualan,
-                    COALESCE(SUM(td.quantity * p.price), 0) AS total_modal,
-                    COALESCE(SUM(td.quantity * ((p.price * p.margin) / 100)), 0) AS total_keuntungan
-                    FROM kasir.transactions t
-                    LEFT JOIN kasir.transaction_details td ON t.id = td.transaction_id
-                    LEFT JOIN kasir.products p ON td.product_id = p.id
-                    WHERE DATE(t.created_at) = CURDATE()
-                    ");
+    DATE(NOW()) AS tanggal,
+    COUNT(DISTINCT o.id) AS total_transaksi_today,
+    COALESCE(SUM(od.qty), 0) AS total_item_terjual,
+    COALESCE(SUM(od.total_price), 0) AS total_penjualan,
+    COALESCE(SUM(od.qty * (p.price - p.base_price)), 0) AS total_keuntungan
+FROM kasir.orders o
+LEFT JOIN kasir.order_details od ON o.id = od.order_fid
+LEFT JOIN kasir.products p ON od.product_fid = p.id
+WHERE DATE(o.created_at) = CURDATE()
+  AND o.status = 'paid'");
     $stmt->execute();
     $result = $stmt->get_result();
     $row = $result->fetch_assoc();
@@ -474,11 +477,13 @@ function dashboardData($conn)
     $stmt->close();
 
     $stmt = $conn->prepare("SELECT 
-SUM(td.quantity * ((p.price * p.margin) / 100)) AS total_profit_yesterday
-FROM kasir.transactions t
-JOIN kasir.transaction_details td ON t.id = td.transaction_id
-JOIN kasir.products p ON td.product_id = p.id
-WHERE DATE(t.created_at) = CURDATE() - INTERVAL 1 DAY
+    COALESCE(SUM(od.qty * (p.price - p.base_price)), 0) AS total_profit_yesterday
+FROM kasir.orders o
+JOIN kasir.order_details od ON o.id = od.order_fid
+JOIN kasir.products p ON od.product_fid = p.id
+WHERE DATE(o.created_at) = CURDATE() - INTERVAL 1 DAY
+  AND o.status = 'paid';
+
 ");
 
     $stmt->execute();
@@ -503,10 +508,10 @@ WHERE DATE(t.created_at) = CURDATE() - INTERVAL 1 DAY
 
     // card data transaksi, user, dan produk
     $stmt = $conn->prepare('SELECT
-(SELECT COUNT(*) FROM members) AS total_users,
-(SELECT COUNT(*) FROM transactions WHERE DATE(created_at) = CURDATE() - INTERVAL 1 DAY) AS total_transaksi_kemarin,
-(SELECT COUNT(*) FROM products) AS total_products,
-(SELECT COUNT(*) FROM transactions WHERE DATE(created_at) = CURDATE() - INTERVAL 1 DAY) AS total_keuntungan_kemarin');
+        (SELECT COUNT(*) FROM members) AS total_users,
+        (SELECT COUNT(*) FROM transactions WHERE DATE(date) = CURDATE() - INTERVAL 1 DAY) AS total_transaksi_kemarin,
+        (SELECT COUNT(*) FROM products) AS total_products,
+        (SELECT COUNT(*) FROM transactions WHERE DATE(date) = CURDATE() - INTERVAL 1 DAY) AS total_keuntungan_kemarin');
     $stmt->execute();
     $result = $stmt->get_result();
     $row = $result->fetch_assoc();
@@ -603,13 +608,14 @@ function getProducts($conn)
                 c.name AS category_name,
                 p.price AS product_price,
                 b.name AS brand,
+                p.stock AS product_qty,
                 COALESCE(SUM(od.qty), 0) AS total_sold,
-                (COALESCE(SUM(od.qty), 0) * p.price) AS profit
+                (COALESCE(SUM(od.qty), 0) * (p.price-p.base_price)) AS profit
             FROM products p
             JOIN categories c ON p.category_id = c.id
             JOIN brands b ON p.brand_id = b.id
             LEFT JOIN order_details od ON p.id = od.product_fid
-            WHERE 1 ";
+            WHERE 1";
 
     $types = '';
     $params = [];

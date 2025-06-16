@@ -106,7 +106,7 @@ if (!isset($_SESSION['loggedIn'])) {
                       <input type="number" name="max" id="filter_max_price" placeholder="Max Price" class="border rounded p-2 w-[100px]">
                     </div>
                     <div class="flex items-end gap-2">
-                        <button onclick="applyFilter()" class="bg-primary text-white px-4 py-2 rounded">Apply</button>
+                        <button onclick="applyProductFilter()" class="bg-primary text-white px-4 py-2 rounded">Apply</button>
                       <button onclick="resetFilter()" class="bg-gray-500 text-white px-4 py-2 rounded">Reset</button>
                     </div>
                   </div>
@@ -119,6 +119,9 @@ if (!isset($_SESSION['loggedIn'])) {
                     </th>
                     <th class="text-center min-w-[100px] px-4 py-4 font-medium text-black dark:text-white">
                       Name
+                    </th>
+                    <th class="text-center min-w-[50px] px-4 py-4 font-medium text-black dark:text-white">
+                      Stock
                     </th>
                     <th class="text-center min-w-[50px] px-4 py-4 font-medium text-black dark:text-white">
                       Brand
@@ -206,18 +209,25 @@ if (!isset($_SESSION['loggedIn'])) {
       const tbody = document.getElementById('tb_product');
       tbody.innerHTML = '';
 
+      
       data.forEach(item => {
+        const stock = parseInt(item.product_qty) > 0;
+        const deleteButton = stock 
+        ? `<button class="bg-gray-400 text-white px-3 py-1 rounded cursor-not-allowed" disabled onclick="alert('Tidak dapat menghapus produk dengan stok.')">Delete</button>`
+        : `<button onclick="if(confirm('Yakin?')) location.href='<?=base_url()?>/service/delete.php?type=products&id=${item.product_id}'" class="bg-red-500 text-white px-3 py-1 rounded">Delete</button>`;
+
         tbody.insertAdjacentHTML('beforeend', `
               <tr>
                   <td class="text-center px-4 py-2"><img src="<?= base_url() ?>/${item.img}" alt="${item.product_name}" class="h-12 mx-auto"></td>
                   <td class="text-center px-4 py-2">${item.product_name}</td>
+                  <td class="text-center px-4 py-2">${item.product_qty}</td>
                   <td class="text-center px-4 py-2">${item.brand}</td>
                   <td class="text-center px-4 py-2">${item.category_name}</td>
                   <td class="text-center px-4 py-2">Rp ${formatRupiah(item.product_price)}</td>
                   <td class="text-center px-4 py-2">${item.total_sold}</td>
                   <td class="text-center px-4 py-2">Rp ${formatRupiah(item.profit)}</td>
                   <td class="text-center px-4 py-2"><button onclick="document.location='edit_product.php?product=${item.product_id}'" class="bg-primary text-white px-3 py-1 rounded">Edit</button>
-                  <button onclick="if(confirm('Yakin?')) location.href='<?=base_url()?>/service/delete.php?type=products&id=${item.product_id}'" class="bg-red-500 text-white px-3 py-1 rounded">Delete</button>
+                  ${deleteButton}
                   </td>
               </tr>
           `);

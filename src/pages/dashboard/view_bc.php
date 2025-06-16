@@ -169,6 +169,10 @@ if (!isset($_SESSION['loggedIn'])) {
     const relation = VIEW === 'categories' ? item.relate_c : item.relate_b;
     const endpoint = VIEW.toLowerCase();
     const id = item.id;
+    const hasRelation = parseInt(relation) > 0;
+    const deleteButton = hasRelation
+      ? `<button class="bg-gray-400 text-white px-3 py-1 rounded cursor-not-allowed" disabled onclick="alert('Data ini memiliki relasi dengan tabel lain dan tidak dapat dihapus.')">Delete</button>`
+      : `<button onclick="if(confirm('Yakin?')) location.href='<?=base_url()?>/service/delete.php?type=${endpoint}&id=${id}'" class="bg-red-500 text-white px-3 py-1 rounded">Delete</button>`;
 
     tbody.insertAdjacentHTML('beforeend', `
       <tr>
@@ -177,7 +181,7 @@ if (!isset($_SESSION['loggedIn'])) {
           <td class="text-center px-4 py-2">${relation}</td>
           <td class="text-center px-4 py-2">
               <button onclick="document.location='edit_bc.php?type=${endpoint}&id=${id}'" class="bg-primary text-white px-3 py-1 rounded">Edit</button>
-              <button onclick="if(confirm('Yakin?')) location.href='<?=base_url()?>/service/delete.php?type=${endpoint}&id=${id}'" class="bg-red-500 text-white px-3 py-1 rounded">Delete</button>
+              ${deleteButton}
           </td>
       </tr>
     `);

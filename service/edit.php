@@ -214,7 +214,7 @@ function putProduct($conn)
         $params[] = $upPrice;
         $types .= 'd';
     }
-    if (!empty($upStock)) {
+    if ($upStock) {
         $fields[] = "stock=?";
         $params[] = $upStock;
         $types .= 'i';
@@ -341,6 +341,10 @@ function putAccount($conn)
     $params = [];
 
     if (!empty($accName)) {
+        $fields[] = "username = ?";
+        $params[] = $accName;
+    }
+    if (!empty($accEmail)) {
         // Cek email apakah sudah digunakan oleh akun lain
         $stmt = $conn->prepare("SELECT id FROM admin WHERE email = ? AND id != ?");
         $stmt->execute([$accEmail, $accId]);
@@ -348,10 +352,6 @@ function putAccount($conn)
             echo json_encode(['success' => false, 'message' => 'Email sudah digunakan oleh akun lain.']);
             exit;
         }
-        $fields[] = "username = ?";
-        $params[] = $accName;
-    }
-    if (!empty($accEmail)) {
         $fields[] = "email = ?";
         $params[] = $accEmail;
     }

@@ -108,7 +108,7 @@ if (isset($_POST['change'])) {
             <!-- Breadcrumb End -->
 
             <!-- ====== Settings Section Start -->
-            <form action="" method="POST" class="grid grid-cols-5 gap-8">
+            <form method="POST" class="grid grid-cols-5 gap-8">
               <div class="col-span-5 xl:col-span-3">
                 <div
                   class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
