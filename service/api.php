@@ -122,9 +122,10 @@ function getMembers($conn)
 
     // Filter Search Name
     if (!empty($search)) {
-        $where .= " AND m.name OR m.phone LIKE ? ";
+        $where .= " AND (m.name LIKE ? OR m.phone LIKE ?) ";
         $params[] = "%$search%";
-        $types .= 's';
+        $params[] = "%$search%";
+        $types .= 'ss';
     }
 
     // Filter Status
@@ -193,15 +194,16 @@ function getAdmins($conn)
     $role = isset($_GET['role']) ? $_GET['role'] : '';
 
     // Bangun WHERE condition
-    $where = " WHERE a.id > 0  AND a.email != ?";
+    $where = " WHERE a.id > 0 AND a.email != ?";
     $params[] = $_SESSION['email'];
     $types = 's';
 
     // Filter Search Name
     if (!empty($search)) {
-        $where .= " AND a.username OR a.email LIKE ? ";
+        $where .= " AND ( a.username LIKE ? OR a.email LIKE ? )";
         $params[] = "%$search%";
-        $types .= 's';
+        $params[] = "%$search%";
+        $types .= 'ss';
     }
 
     // Filter Role
@@ -251,7 +253,7 @@ function getAdmins($conn)
             'total_pages' => $totalPages
         ]);
         exit();
-    } else {
+    } else if ($result->num_rows > 0 || (isset($_SESSION['email']) && $params[0] === $_SESSION['email'])) {
         echo json_encode(['error' => 'No admins found']);
         http_response_code(404);
     }
@@ -401,10 +403,10 @@ function getOrders($conn)
     $sql .= " ORDER BY o.created_at DESC";
 
     // Pagination
-    $page = isset($_GET['page']) ? max((int)$_GET['page'], 1) : 1;
-    $limit = 7;
-    $offset = ($page - 1) * $limit;
-    $sql .= " LIMIT $limit OFFSET $offset";
+    // $page = isset($_GET['page']) ? max((int)$_GET['page'], 1) : 1;
+    // $limit = 7;
+    // $offset = ($page - 1) * $limit;
+    // $sql .= " LIMIT $limit OFFSET $offset";
 
     $stmt = $conn->prepare($sql);
     if ($params) {

@@ -300,8 +300,19 @@ function transaction($conn)
 
     $order_id = (int)$data->order_id;
     $cash = (float)$data->cash;
-    $discount_id = isset($data->discount_id) ? (int)$data->discount_id : 0;
+    $discount_id = (isset($data->discount) && $data->discount !== null) ? (int)$data->discount : 0;
     $code =  date('Ymd') . '-' . str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
+
+    // echo json_encode([
+    //     'status' => 'error',
+    //     'message' => [
+    //         'order_id' => $order_id,
+    //         'cash' => $cash,
+    //         'discount_id' => $discount_id,
+    //         'code' => $code
+    //     ]
+    // ]);
+    // exit;
 
     // Ambil detail order dan member_id
     $stmt = $conn->prepare("SELECT member_id FROM orders WHERE id = ?");
@@ -392,7 +403,7 @@ function transaction($conn)
             http_response_code(500);
             echo json_encode(['status' => 'error', 'message' => 'Gagal memproses transaksi', 'error' => $e->getMessage()]);
         }
-    } else {
+    } elseif ($discount_id == 0) {
         $exchange = $cash - $subtotal;
         if ($exchange < 0) $exchange = 0;
 
@@ -729,7 +740,7 @@ function add_product($conn)
     $stmt->execute();
     $result = $stmt->get_result();
     if ($result->num_rows > 0) {
-        $_SESSION['err'] = "Produk dengan nama $name sudah ada";
+        echo json_encode(['status' => 'error', 'message' => 'Product with this name already exists']);
         exit();
     }
 
@@ -749,14 +760,12 @@ function add_product($conn)
     $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION)); // Get the file extension
 
     if (!in_array($file_ext, $allowed)) {
-        $_SESSION['err'] = "File type is not allowed. Please upload a png, jpg, or jpeg file instead.";
-        header('location: ../src/pages/dashboard/add_product.php');
+        echo json_encode(['status' => 'error', 'message' => 'File type isnt allowed. Please upload as png, jpg, or jpeg']);
         exit();
     }
 
     if ($file_size > $maxsize) {
-        $_SESSION['err'] = "File is too large. File size should not exceed 4MB.";
-        header('location: ../src/pages/dashboard/add_product.php');
+        echo json_encode(['status' => 'error', 'message' => 'File is too large. File size should not exceed 4MB']);
         exit();
     }
 
@@ -775,6 +784,7 @@ function add_product($conn)
     // Insert the product into the database
     $price = $_POST['price'];
     $stock = $_POST['stock'];
+    $base_price = $_POST['base_price'];
     if ($_POST['production'] == '') {
         $production = NULL;
     } elseif ($_POST['production'] !== '') {
@@ -796,19 +806,44 @@ function add_product($conn)
     }
     $uniqcode = generate_varchar();
 
+    if ($price === 0) {
+        echo json_encode(['status' => 'error', 'message' => 'Selling price cant be empty']);
+        exit();
+    }
+
+    if ($base_price === 0) {
+        echo json_encode(['status' => 'error', 'message' => 'Base price cant be empty']);
+        exit();
+    }
+
+    if ($brand === 0) {
+        echo json_encode(['status' => 'error', 'message' => 'Brand cant be empty']);
+        exit();
+    }
+
+    if ($fid_category === 0) {
+        echo json_encode(['status' => 'error', 'message' => 'Category cant be empty']);
+        exit();
+    }
+
+    if ($stock === 0) {
+        echo json_encode(['status' => 'error', 'message' => 'Stock cant be empty']);
+        exit();
+    }
+
     // Check if all required fields are set
     $stmt = $conn->prepare("INSERT INTO products
-            (name, price, stock, category_id, description, image, brand_id, production_date, expiration_date, created_at, uniqcode) 
-            VALUES (?,?,?,?,?,?,?,?,?,NOW(),?)");
-    $stmt->bind_param("sdiississs", $name, $price,  $stock, $fid_category, $description, $img, $brand, $production, $exp, $uniqcode);
+            (name, price, base_price, stock, category_id, description, image, brand_id, production_date, expiration_date, created_at, uniqcode) 
+            VALUES (?,?,?,?,?,?,?,?,?,?,NOW(),?)");
+    $stmt->bind_param("sddiississs", $name, $price, $base_price, $stock, $fid_category, $description, $img, $brand, $production, $exp, $uniqcode);
     // $query = "INSERT INTO products (name, price, margin, stock, category_id, description, image, brand_id, production_date, expiration_date, created_at) VALUES ($name, $price, $margin, $stock, $fid_category, $description, $img, $brand, $production, $exp, NOW())";
     // echo $query;
 
     if ($stmt->execute()) {
-        $_SESSION['success'] = 'produk berhasil ditambahkan';
-        header('location: ../src/pages/dashboard/add_product.php');
+        echo json_encode(['status' => 'success', 'message' => 'Upload successful']);
+        exit();
     } else {
-        $_SESSION['err'] = 'produk gagal ditambahkan';
-        header('location: ../src/pages/dashboard/add_product.php');
+        echo json_encode(['status' => 'error', 'message' => 'Failed to upload add new product']);
+        exit();
     }
 }

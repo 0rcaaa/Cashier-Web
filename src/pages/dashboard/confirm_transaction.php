@@ -57,7 +57,7 @@ function get_cart($order_id, $conn)
   // Ambil diskon valid jika member punya cukup poin
   $discounts = [];
   if (!empty($header['member_points'])) {
-    $stmt_discount = $conn->prepare("SELECT id, title, points_required, percentage FROM discounts WHERE points_required <= ?");
+    $stmt_discount = $conn->prepare("SELECT id, title, points_required, percentage FROM discounts WHERE points_required <= ? AND exp_at > NOW()");
     $stmt_discount->bind_param("i", $header['member_points']);
     $stmt_discount->execute();
     $discounts = $stmt_discount->get_result()->fetch_all(MYSQLI_ASSOC);
@@ -290,13 +290,24 @@ function format_rupiah($angka)
   // Submit transaksi
   function confirmPayment() {
     const cashValue = parseRupiah(cashInput.value);
-    const [discountValue, discountId] = (discountSelect?.value || "0|0").split('|').map(Number);
+    const [discountPercentage, discountId] = (discountSelect?.value || "0|0").split('|').map(Number);
+    const discountValue = Math.floor((discountPercentage / 100)* subtotal) ;
     const finalTotal = subtotal - discountValue;
 
     if (cashValue < finalTotal) {
       alert('Jumlah cash kurang dari total belanja.');
+      console.log(finalTotal)
       return;
     }
+    // console.log(
+    //   JSON.stringify({
+    //     action: 'transaction',
+    //     order_id: <?= json_encode($order_id) ?>,
+    //     cash: cashValue,
+    //     discount: discountId,
+    //     method: 'cash'
+    //   })
+    // )
 
     fetch('<?= base_url() ?>/service/auth.php', {
       method: 'POST',
@@ -316,6 +327,7 @@ function format_rupiah($angka)
         window.location.href = `transaction_details.php?order=<?= $order_id ?>`;
       } else if(data.status === 'error'){
         alert(data.message)
+        console.log(data.message.discount_id)
       }
     })
     .catch(error => {

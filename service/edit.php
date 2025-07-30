@@ -106,6 +106,7 @@ function putMember($conn) {
     $phone = $_POST['phone'];
     $points = $_POST['points'];
     $password = isset($_POST['password']) ? $_POST['password'] : null;
+    $exp_at = $_POST['exp_at'];
 
     // Validasi awal
     if (empty($memId)) {
@@ -122,6 +123,12 @@ function putMember($conn) {
     if (!empty($name)) {
         $fields[] = "name = ?";
         $params[] = $name;
+        $types .= 's';
+    }
+
+    if (!empty($exp_at)) {
+        $fields[] = "exp_at = ?";
+        $params[] = $exp_at;
         $types .= 's';
     }
 

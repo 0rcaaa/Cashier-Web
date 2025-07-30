@@ -69,6 +69,7 @@ if (isset($_SESSION['loggedIn']) == False) {
             class="rounded-sm border border-stroke bg-white px-5 pb-2.5 pt-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
             <div class="px-4 py-6 md:px-6 xl:px-7.5 flex items-center justify-between">
               <h4 class="text-xl font-bold text-black dark:text-white">Transactions</h4>
+              <button class="bg-primary text-white px-4 py-2 rounded" onclick="toExcel()">Export as Excel</button>
             </div>
             <div class="max-w-full overflow-x-auto">
               <table class="w-full table-auto">
@@ -148,7 +149,7 @@ if (isset($_SESSION['loggedIn']) == False) {
 
                 </tbody>
               </table>
-              <div id="pagination" class="flex gap-2 mt-4"></div>
+              <div id="pagination_controls" class="flex gap-2 mt-4 mx-auto w-fit"></div>
             </div>
           </div>
 
@@ -160,53 +161,60 @@ if (isset($_SESSION['loggedIn']) == False) {
   </div>
   <!-- ===== Page Wrapper End ===== -->
   <script defer src="../../js/bundle.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
   <script>
-  let allOrders = [];
-  const ITEMS_PER_PAGE = 7;
-  let currentPage = 1;
+    let allOrders = [];
+    const ITEMS_PER_PAGE = 7;
+    let currentPage = 1;
 
-  document.addEventListener('DOMContentLoaded', function() {
-    applyFilter();
+    document.addEventListener('DOMContentLoaded', function() {
+      applyFilter();
+      renderPagination();
 
-    // Event listener search (Enter key)
-    document.getElementById('search_order').addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') searchOrder();
+      // Event listener search (Enter key)
+      document.getElementById('search_order').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') searchOrder();
+      });
+
+      // Sinkronisasi tanggal filter
+      document.getElementById('filter_date_from').addEventListener('change', function() {
+        document.getElementById('filter_date_to').min = this.value;
+      });
+      document.getElementById('filter_date_to').addEventListener('change', function() {
+        document.getElementById('filter_date_from').max = this.value;
+      });
     });
 
-    // Sinkronisasi tanggal filter
-    document.getElementById('filter_date_from').addEventListener('change', function() {
-      document.getElementById('filter_date_to').min = this.value;
-    });
-    document.getElementById('filter_date_to').addEventListener('change', function() {
-      document.getElementById('filter_date_from').max = this.value;
-    });
-  });
+    function getOrders(filters = {}) {
+      const params = new URLSearchParams({
+        action: 'get_orders',
+        ...filters
+      });
 
-  function getOrders(filters = {}) {
-    const params = new URLSearchParams({ action: 'get_orders', ...filters });
+      fetch(`<?= base_url() ?>/service/api.php?${params}`)
+        .then(response => response.json())
+        .then(data => {
+          console.log(data);
+          allOrders = Array.isArray(data) ? data : [];
+          currentPage = 1;
+          renderTable();
+          renderPagination();
+        })
+        .catch(error => console.error('Error:', error));
+    }
 
-    fetch(`<?= base_url() ?>/service/api.php?${params}`)
-      .then(response => response.json())
-      .then(data => {
-        allOrders = Array.isArray(data) ? data : [];
-        currentPage = 1;
-        renderTable();
-        renderPagination();
-      })
-      .catch(error => console.error('Error:', error));
-  }
+    function renderTable() {
+      const tbody = document.getElementById('tb_product');
+      tbody.innerHTML = '';
 
-  function renderTable() {
-    const tbody = document.getElementById('tb_product');
-    tbody.innerHTML = '';
+      const start = (currentPage - 1) * ITEMS_PER_PAGE;
+      const end = start + ITEMS_PER_PAGE;
+      const paginatedOrders = allOrders.slice(start, end);
 
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    const end = start + ITEMS_PER_PAGE;
-    const paginatedOrders = allOrders.slice(start, end);
-
-    if (paginatedOrders.length > 0) {
-      paginatedOrders.forEach(order => {
-        tbody.innerHTML += `
+      if (paginatedOrders.length > 0) {
+        paginatedOrders.forEach(order => {
+          tbody.innerHTML += `
           <tr>
             <td class="text-center px-4 py-2">${order.order_number}</td>
             <td class="text-center px-4 py-2">${order.member_name ?? 'Unregistered'}</td>
@@ -218,81 +226,126 @@ if (isset($_SESSION['loggedIn']) == False) {
               <a href="transaction_details.php?order=${order.order_number}" class="text-primary hover:underline">View</a>
             </td>
           </tr>`;
-      });
-    } else {
-      tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4">No data found</td></tr>`;
-    }
-  }
-
-  function renderPagination() {
-    let container = document.getElementById('pagination_controls');
-    if (!container) {
-      container = document.createElement('div');
-      container.id = 'pagination_controls';
-      container.className = 'flex justify-center mt-4';
-      document.querySelector('main').appendChild(container);
+        });
+      } else {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4">No data found</td></tr>`;
+      }
     }
 
-    container.innerHTML = '';
-    const totalPages = Math.ceil(allOrders.length / ITEMS_PER_PAGE);
-    if (totalPages <= 1) return;
+    function renderPagination() {
+      let container = document.getElementById('pagination_controls');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'pagination_controls';
+        container.className = 'flex justify-center mt-4';
+        document.querySelector('main').appendChild(container);
+      }
 
-    // Prev button
-    container.innerHTML += `<button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''} class="px-2 py-1 border rounded mx-1 ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''}">Prev</button>`;
+      container.innerHTML = '';
+      const totalPages = Math.ceil(allOrders.length / ITEMS_PER_PAGE);
+      if (totalPages <= 1) return;
 
-    // Page numbers
-    for (let i = 1; i <= totalPages; i++) {
-      container.innerHTML += `<button onclick="changePage(${i})" class="px-2 py-1 border rounded mx-1 ${i === currentPage ? 'bg-primary text-white' : ''}">${i}</button>`;
+      // Prev button
+      container.innerHTML += `<button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''} class="px-2 py-1 border rounded mx-1 ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''}">Prev</button>`;
+
+      // Page numbers
+      for (let i = 1; i <= totalPages; i++) {
+        container.innerHTML += `<button onclick="changePage(${i})" class="px-2 py-1 border rounded mx-1 ${i === currentPage ? 'bg-primary text-white' : ''}">${i}</button>`;
+      }
+
+      // Next button
+      container.innerHTML += `<button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''} class="px-2 py-1 border rounded mx-1 ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : ''}">Next</button>`;
     }
 
-    // Next button
-    container.innerHTML += `<button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''} class="px-2 py-1 border rounded mx-1 ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : ''}">Next</button>`;
-  }
+    function changePage(page) {
+      const totalPages = Math.ceil(allOrders.length / ITEMS_PER_PAGE);
+      if (page < 1 || page > totalPages) return;
+      currentPage = page;
+      renderTable();
+      renderPagination();
+    }
 
-  function changePage(page) {
-    const totalPages = Math.ceil(allOrders.length / ITEMS_PER_PAGE);
-    if (page < 1 || page > totalPages) return;
-    currentPage = page;
-    renderTable();
-    renderPagination();
-  }
+    function capitalize(str) {
+      return str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
+    }
 
-  function capitalize(str) {
-    return str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
-  }
+    function formatDate(dateStr) {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('id-ID');
+    }
 
-  function formatDate(dateStr) {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('id-ID');
-  }
+    function applyFilter() {
+      const filters = {
+        member: document.getElementById('filter_member').value,
+        status: document.getElementById('filter_status').value,
+        date_from: document.getElementById('filter_date_from').value,
+        date_to: document.getElementById('filter_date_to').value
+      };
+      getOrders(filters);
+    }
 
-  function applyFilter() {
-    const filters = {
-      member: document.getElementById('filter_member').value,
-      status: document.getElementById('filter_status').value,
-      date_from: document.getElementById('filter_date_from').value,
-      date_to: document.getElementById('filter_date_to').value
-    };
-    getOrders(filters);
-  }
-
-  function resetFilter() {
-    document.getElementById('filter_member').value = '';
-    document.getElementById('filter_status').value = '';
-    document.getElementById('filter_date_from').value = '';
-    document.getElementById('filter_date_to').value = '';
-    applyFilter();
-  }
-
-  function searchOrder() {
-    const search = document.getElementById('search_order').value.trim();
-    if (search) {
-      getOrders({ search });
-    } else {
+    function resetFilter() {
+      document.getElementById('filter_member').value = '';
+      document.getElementById('filter_status').value = '';
+      document.getElementById('filter_date_from').value = '';
+      document.getElementById('filter_date_to').value = '';
       applyFilter();
     }
-  }
-</script>
+
+    function searchOrder() {
+      const search = document.getElementById('search_order').value.trim();
+      if (search) {
+        getOrders({
+          search
+        });
+      } else {
+        applyFilter();
+      }
+    }
+
+    function toExcel() {
+      const SHEET_ID = '1s2d8UISp0xPA7Zg4WprzvppgMytoupkSRsTOeL3Brxk';
+      const API_KEY = 'AIzaSyAZ12I1ACCDyAvYsDf2bzmuXuA_LPi9lrw';
+      const RANGE = 'Sheet1!A1';
+
+      if (!allOrders || allOrders.length === 0) {
+        alert("Tidak ada data.");
+        return;
+      }
+
+      // Siapkan data (header + isi)
+      const values = [
+        ["Order", "Member", "Qty", "Total Price", "Status", "Date"],
+        ...allOrders.map(o => [
+          o.order_number,
+          o.member_name ?? 'Unregistered',
+          o.qty,
+          o.total_price,
+          capitalize(o.status),
+          formatDate(o.date)
+        ])
+      ];
+
+      fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?valueInputOption=RAW&key=${API_KEY}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            values
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          console.log("Sukses update:", data);
+          alert("Data berhasil dikirim ke Google Spreadsheet.");
+        })
+        .catch(error => {
+          console.error("Gagal update:", error);
+          alert("Gagal mengirim data.");
+        });
+    }
+  </script>
 
 </body>
 

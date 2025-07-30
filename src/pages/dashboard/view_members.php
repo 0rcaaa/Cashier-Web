@@ -177,7 +177,17 @@ if (!isset($_SESSION['loggedIn'])) {
             dataTable(filters, newPage);
           });
         })
-        .catch(error=> console.error('Error fetching data:', error));
+        .catch(async error => {
+          // Try to parse error response as JSON and display error message in table
+          let message = error.message || 'Error fetching data';
+          if (error.response) {
+            try {
+              const errJson = await error.response.json();
+              message = errJson.error || message;
+            } catch (e) {}
+          }
+          renderTableError(message);
+        });
     }
     //buat record table
     function renderTable(data){
@@ -200,6 +210,17 @@ if (!isset($_SESSION['loggedIn'])) {
         
       });
     }
+
+    // Fungsi untuk menampilkan error di tabel
+        function renderTableError(message) {
+          const TB = document.getElementById('tb');
+          TB.innerHTML = `
+            <tr>
+              <td colspan="6" class="text-center px-4 py-2 text-red-500">${message}</td>
+            </tr>
+          `;
+        }
+    
     //buat pagination
     function renderPagination(currentPage, totalPages, onChangePage){
       const pagination = document.getElementById('pagination');

@@ -41,9 +41,12 @@ if (isset($_POST['change'])) {
     $stmt = $conn->prepare("UPDATE $ENDPOINT SET name = ? WHERE id = ?");
     $stmt->bind_param("si", $name, $ID);
     if ($stmt->execute()) {
-      echo "<script>alert('Brand updated successfully');</script>";
+      echo "<script>alert('Brand updated successfully'); window.location.href='view_brand.php';</script>";
+      exit;
     } else {
       echo "<script>alert('Error updating brand');</script>";
+      echo "<script>document.querySelector('form').reset();</script>";
+      exit;
     }
   }
 }
@@ -108,7 +111,7 @@ if (isset($_POST['change'])) {
             <!-- Breadcrumb End -->
 
             <!-- ====== Settings Section Start -->
-            <form method="POST" class="grid grid-cols-5 gap-8">
+            <form method="POST" action="" class="grid grid-cols-5 gap-8">
               <div class="col-span-5 xl:col-span-3">
                 <div
                   class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">

@@ -321,7 +321,7 @@ if (isset($_SESSION['success'])) {
             const afterDiscount = totalHarga - saved;
             const kembalian = parseInt(d.cash) - afterDiscount;
 
-            const pesan = `🧾 *Apotek Sehat Sentosa*\n` +
+            const pesan = `🧾 *0rca Store*\n` +
                 `No Struk: ${d.noInv}\n` +
                 `Tanggal: ${new Date(d.date).toLocaleString('id-ID')}\n` +
                 `Kasir: <?= $_SESSION['name'] ?>\n` +

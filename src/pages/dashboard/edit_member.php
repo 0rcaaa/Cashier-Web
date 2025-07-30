@@ -95,6 +95,19 @@ if (isset($_SESSION['loggedIn']) == False) {
                       </div>
                     </div>
 
+                    <div class="mb-5.5">
+                      <div class="w-full">
+                        <label
+                          class="mb-3 block text-sm font-medium text-black dark:text-white"
+                          for="exp_at">Expired at</label>
+                        <input
+                          class="w-full rounded border border-stroke bg-gray px-4.5 py-3 font-medium text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
+                          type="datetime-local"
+                          name="exp_at"
+                          id="exp_at" />
+                      </div>
+                    </div>
+
                     <div class="mb-5.5 flex flex-col gap-5.5 sm:flex-row">
                       <div class="w-full sm:w-1/2">
                         <label
@@ -191,13 +204,15 @@ if (isset($_SESSION['loggedIn']) == False) {
             memberId: mem.id,
             name: mem.name || '',
             phone: mem.phone || '',
-            points: mem.points || ''
+            points: mem.points || '',
+            exp_at : mem.exp_at || ''
           };
 
           // Isi form input
           document.getElementById('username').value = mem.name || '';
           document.getElementById('phone').value = mem.phone || '';
           document.getElementById('points').value = mem.points || '';
+          document.querySelector('input[name="exp_at"]').value = mem.exp_at || '';
         }).catch(err => {
           console.error("Fetch error:", err);
           alert("Terjadi kesalahan saat mengambil data.");
@@ -218,7 +233,8 @@ if (isset($_SESSION['loggedIn']) == False) {
         const updatedData = {
           name: document.getElementById('username').value.trim(),
           phone: document.getElementById('phone').value.trim(),
-          points: parseInt(document.getElementById('points').value)
+          points: parseInt(document.getElementById('points').value),
+          exp_at: document.getElementById('exp_at').value
         };
 
         const pw = document.getElementById('password');

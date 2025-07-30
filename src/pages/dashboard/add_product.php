@@ -123,6 +123,20 @@ if (isset($_SESSION['success'])) {
                     </div>
 
                     <div class="mb-5.5 flex flex-col gap-5.5 sm:flex-row">
+
+                    <div class="w-full sm:w-1/2">
+                        <label
+                          class="mb-3 block text-sm font-medium text-black dark:text-white"
+                          for="base_price">Base price</label>
+                        <input
+                          class="[&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none 
+                              [&::-moz-appearance:textfield] w-full rounded border border-stroke bg-gray px-4.5 py-3 font-medium text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
+                          type="text"
+                          name="base_price"
+                          placeholder="Masukkan harga pokok"
+                          id="base_price" />
+                      </div>
+
                       <div class="w-full sm:w-1/2">
                         <label
                           class="mb-3 block text-sm font-medium text-black dark:text-white"
@@ -130,22 +144,9 @@ if (isset($_SESSION['success'])) {
                         <input
                           class=" w-full rounded border border-stroke bg-gray px-4.5 py-3 font-medium text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
                           type="text"
-                          placeholder="Masukkan harga"
+                          placeholder="Masukkan harga jual"
                           name="price"
                           id="price" />
-                      </div>
-
-                      <div class="w-full sm:w-1/2">
-                        <label
-                          class="mb-3 block text-sm font-medium text-black dark:text-white"
-                          for="uniqcode">Uniqcode</label>
-                        <input
-                          class="[&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none 
-                              [&::-moz-appearance:textfield] w-full rounded border border-stroke bg-gray px-4.5 py-3 font-medium text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
-                          type="text"
-                          name="uniqcode"
-                          placeholder="Max 30"
-                          id="uniqcode" />
                       </div>
                     </div>
 
@@ -194,6 +195,20 @@ if (isset($_SESSION['success'])) {
                         <option value="" class="dark:text-white">--- Pilih kategori ---</option>
                       </select>
                     </div>
+
+                    
+                      <div class="w-full sm:w-1 mb-5.5">
+                        <label
+                          class="mb-3 block text-sm font-medium text-black dark:text-white"
+                          for="uniqcode">Uniqcode</label>
+                        <input
+                          class="[&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none 
+                              [&::-moz-appearance:textfield] w-full rounded border border-stroke bg-gray px-4.5 py-3 font-medium text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
+                          type="text"
+                          name="uniqcode"
+                          placeholder="Max 30"
+                          id="uniqcode" />
+                      </div>
 
                     <div>
                       <label
@@ -360,8 +375,11 @@ if (isset($_SESSION['success'])) {
       form.addEventListener("submit", function(e) {
         e.preventDefault();
 
-        let priceInput = document.getElementById("price");
-        priceInput.value = priceInput.value.replace(/[^0-9,]/g, "").replace(/\./g, ""); // Hapus "Rp." & titik
+        //validasi input
+        ["price", "base_price"].forEach(id => {
+          let input = document.getElementById(id);
+          input.value = input.value.replace(/[^0-9,]/g, "").replace(/\./g, "");
+        });
 
         const formData = new FormData(form);
 
@@ -390,7 +408,7 @@ if (isset($_SESSION['success'])) {
           })
           .catch(error => {
             console.error("Error:", error);
-            alert("An error occurred while creating the account.");
+            alert("An error occurred while creating new product.");
             submitButton.disabled = false;
             submitButton.innerText = "Save";
           });
@@ -427,11 +445,11 @@ if (isset($_SESSION['success'])) {
         });
     }
 
-    document.getElementById("price").addEventListener("input", function(event) {
-      let inputValue = event.target.value.replace(/[^\d,]/g, "");
-      inputValue = inputValue.replace(/,/g, ".");
-      let formattedValue = formatRupiah(inputValue);
-      event.target.value = formattedValue;
+    ["price", "base_price"].forEach(id => {
+      document.getElementById(id).addEventListener("input", function(e) {
+        let val = e.target.value.replace(/[^\d,]/g, "");
+        e.target.value = formatRupiah(val);
+      });
     });
 
     function formatRupiah(angka) {

@@ -86,7 +86,7 @@ if (!isset($_SESSION['loggedIn'])) {
 
                   <!-- Filters -->
                   <div class="flex flex-wrap items-end gap-4">
-                    
+
 
                     <div class="flex flex-col">
                       <label for="filter_status">Filter Role</label>
@@ -99,7 +99,7 @@ if (!isset($_SESSION['loggedIn'])) {
 
                     <!-- Apply / Reset -->
                     <div class="flex items-end gap-2">
-                        <button onclick="applyFilter()" class="bg-primary text-white px-4 py-2 rounded">Apply</button>
+                      <button onclick="applyFilter()" class="bg-primary text-white px-4 py-2 rounded">Apply</button>
                       <button onclick="resetFilter()" class="bg-gray-500 text-white px-4 py-2 rounded">Reset</button>
                     </div>
                   </div>
@@ -146,23 +146,24 @@ if (!isset($_SESSION['loggedIn'])) {
   <!-- ===== Page Wrapper End ===== -->
   <script defer src="../../js/bundle.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', function(){
+    document.addEventListener('DOMContentLoaded', function() {
       dataTable();
     });
+
     //fetch data from api
-        function fetchData(params = {}){
+    function fetchData(params = {}) {
       const query = new URLSearchParams(params).toString();
-      return fetch(`<?= base_url()?>/service/api.php?action=getAdmins&${query}`)
-        .then(response =>{
-          if (!response.ok){
+      return fetch(`<?= base_url() ?>/service/api.php?action=getAdmins&${query}`)
+        .then(response => {
+          if (!response.ok) {
             throw new Error('Network response was not daijoubu');
           }
           return response.json();
         })
     }
     //ambil data
-    function dataTable(filters = {}, page = 1){
-      const params ={
+    function dataTable(filters = {}, page = 1) {
+      const params = {
         ...filters,
         page,
         limit: 3
@@ -170,14 +171,34 @@ if (!isset($_SESSION['loggedIn'])) {
       fetchData(params)
         .then(response => {
           renderTable(response.data);
-          renderPagination(response.current_page, response.total_pages, newPage =>{
+          renderPagination(response.current_page, response.total_pages, newPage => {
             dataTable(filters, newPage);
           });
         })
-        .catch(error=> console.error('Error fetching data:', error));
+        .catch(async error => {
+          // Try to parse error response as JSON and display error message in table
+          let message = error.message || 'Error fetching data';
+          if (error.response) {
+            try {
+              const errJson = await error.response.json();
+              message = errJson.error || message;
+            } catch (e) {}
+          }
+          renderTableError(message);
+        });
+
+      // Fungsi untuk menampilkan error di tabel
+      function renderTableError(message) {
+        const TB = document.getElementById('tb');
+        TB.innerHTML = `
+            <tr>
+              <td colspan="6" class="text-center px-4 py-2 text-red-500">${message}</td>
+            </tr>
+          `;
+      }
     }
     //buat record table
-    function renderTable(data){
+    function renderTable(data) {
       const TB = document.getElementById('tb');
       TB.innerHTML = '';
       data.forEach(item => {
@@ -189,21 +210,21 @@ if (!isset($_SESSION['loggedIn'])) {
                   <td class="text-center px-4 py-2">${item.Created_at}</td>
                   <td class="text-center px-4 py-2">${item.Updated_at}</td>
                   <td class="text-center px-4 py-2"><button onclick="document.location='edit_account.php?account=${item.id}'" class="bg-primary text-white px-3 py-1 rounded">Edit</button>
-                  <button onclick="if(confirm('Yakin?')) location.href='<?=base_url()?>/service/delete.php?type=admin&id=${item.id}'" class="bg-red-500 text-white px-3 py-1 rounded">Delete</button>
+                  <button onclick="if(confirm('Yakin?')) location.href='<?= base_url() ?>/service/delete.php?type=admin&id=${item.id}'" class="bg-red-500 text-white px-3 py-1 rounded">Delete</button>
                   </td>
               </tr>
           `);
-        
+
       });
     }
     //buat pagination
-    function renderPagination(currentPage, totalPages, onChangePage){
+    function renderPagination(currentPage, totalPages, onChangePage) {
       const pagination = document.getElementById('pagination');
       pagination.innerHTML = '';
 
-      if(totalPages <= 1)return;
+      if (totalPages <= 1) return;
 
-       const createButton = (label, page, disabled = false, active = false) => {
+      const createButton = (label, page, disabled = false, active = false) => {
         const btn = document.createElement('button');
         btn.textContent = label;
         btn.className = `px-3 py-1 mx-1 rounded border 
@@ -229,23 +250,25 @@ if (!isset($_SESSION['loggedIn'])) {
       return document.getElementById(id).value;
     }
     // searcg function
-    function search(){
+    function search() {
       const keyword = getValue('search').trim();
-      dataTable({search:keyword},1);
+      dataTable({
+        search: keyword
+      }, 1);
     }
     //apply filter
-    function applyFilter(){
+    function applyFilter() {
       const filters = {
         role: getValue('filter_status'),
       }
-       dataTable(cleanObject(filters), 1);
+      dataTable(cleanObject(filters), 1);
     }
     //reset filter
-    function resetFilter(){
-      ['filter_status'].forEach(id=>{
-        document.getElementById(id).value ='';
+    function resetFilter() {
+      ['filter_status'].forEach(id => {
+        document.getElementById(id).value = '';
       })
-      dataTable({},1);
+      dataTable({}, 1);
     }
     // Helper clean params (buang null/empty)
     function cleanObject(obj) {
